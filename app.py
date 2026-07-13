@@ -148,6 +148,7 @@ def webauthn_page():
     return render_template(
         "webauthn_auth.html",
         has_credential=webauthn_auth.has_registered_credential(user["id"]),
+        methods=db.get_webauthn_methods_for_user(user["id"]),
     )
 
 
@@ -163,6 +164,7 @@ def dashboard():
         cards=cards,
         movements=movements,
         account=_account_view(user),
+        fido2_methods=db.get_webauthn_methods_for_user(user["id"]),
     )
 
 
@@ -269,7 +271,12 @@ def api_face_identify():
 def api_webauthn_register_begin():
     user = _current_user()
     rp_id, _origin = _webauthn_ids()
-    options_json = webauthn_auth.build_registration_options(user, rp_id)
+    payload = request.get_json(silent=True) or {}
+    method = payload.get("method", "huella")
+    # Se recuerda el metodo elegido para persistirlo al completar el registro
+    # (el body de /complete es la credencial cruda de WebAuthn, sin este dato).
+    session["webauthn_method"] = method
+    options_json = webauthn_auth.build_registration_options(user, rp_id, method)
     return options_json, 200, {"Content-Type": "application/json"}
 
 
@@ -278,9 +285,10 @@ def api_webauthn_register_begin():
 def api_webauthn_register_complete():
     user = _current_user()
     rp_id, origin = _webauthn_ids()
+    method = session.get("webauthn_method", "huella")
     credential_json = request.get_data(as_text=True)
     try:
-        webauthn_auth.complete_registration(user, credential_json, rp_id, origin)
+        webauthn_auth.complete_registration(user, credential_json, rp_id, origin, method)
     except Exception as error:
         return jsonify(ok=False, error=str(error)), 400
     return jsonify(ok=True)

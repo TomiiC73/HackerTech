@@ -1,18 +1,58 @@
 {% extends "base.html" %}
 {% block title %}FIDO2 — HackerBank{% endblock %}
 {% block content %}
-<div class="face-shell">
-  <div class="badge">Modo B &middot; FIDO2 / WebAuthn</div>
-  <h1 class="face-shell__title">Autenticación segura</h1>
-  <p class="face-shell__subtitle">
-    Vas a usar el autenticador de plataforma de tu equipo (Windows Hello, Touch ID
-    o llave de seguridad). La biometría se procesa localmente y nunca llega a este servidor.
-  </p>
+<div class="auth-shell">
+  <div class="auth-card auth-card--wide">
+    <div class="badge badge--center">Modo B &middot; FIDO2 / WebAuthn</div>
+    <div class="auth-card__title">Autenticación segura</div>
+    <div class="auth-card__subtitle">
+      La biometría se procesa localmente en tu equipo y nunca llega al servidor:
+      solo viaja una firma criptográfica.
+    </div>
 
-  <div class="status-line" id="webauthn-status">Listo para comenzar.</div>
-  <button class="btn btn--gold" id="webauthn-action">
-    {% if has_credential %}Autenticarme con FIDO2{% else %}Registrar credencial FIDO2{% endif %}
-  </button>
+    {% if has_credential %}
+      {% if methods %}
+      <div class="method-configured">
+        Método configurado: <b>{{ methods | join(', ') }}</b>
+      </div>
+      {% endif %}
+      <div class="status-line" id="webauthn-status">Listo para autenticarte.</div>
+      <button class="btn btn--gold btn--full" id="webauthn-action" data-mode="auth">
+        Autenticarme con FIDO2
+      </button>
+    {% else %}
+      <div class="method-label">Elegí cómo querés autenticarte</div>
+      <div class="method-grid" id="method-grid">
+        <button type="button" class="method-option active" data-method="huella">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/></svg>
+          </span>
+          <span class="method-option__name">Huella</span>
+        </button>
+        <button type="button" class="method-option" data-method="rostro">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0"/></svg>
+          </span>
+          <span class="method-option__name">Rostro</span>
+        </button>
+        <button type="button" class="method-option" data-method="passkey">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="10" r="4"/><path d="M11 12l7 7v2h-3l-1-1h-2v-2l-1-1"/></svg>
+          </span>
+          <span class="method-option__name">Clave de acceso</span>
+        </button>
+      </div>
+      <p class="method-note">
+        Tu dispositivo decide qué biometría usar (Windows Hello, Touch ID) según lo que
+        tengas configurado. La <b>clave de acceso</b> es una passkey que puede sincronizar
+        entre tus dispositivos.
+      </p>
+      <div class="status-line" id="webauthn-status">Elegí un método y registralo.</div>
+      <button class="btn btn--gold btn--full" id="webauthn-action" data-mode="register">
+        Registrar método
+      </button>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}

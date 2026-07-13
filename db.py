@@ -69,7 +69,8 @@ def init_db():
                 user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 credential_id BLOB UNIQUE NOT NULL,
                 public_key BLOB NOT NULL,
-                sign_count INTEGER NOT NULL DEFAULT 0
+                sign_count INTEGER NOT NULL DEFAULT 0,
+                method TEXT
             );
 
             CREATE TABLE IF NOT EXISTS webauthn_challenges (
@@ -80,6 +81,14 @@ def init_db():
             );
             """
         )
+        _migrate(conn)
+
+
+def _migrate(conn):
+    """Migraciones idempotentes para bases ya creadas antes de un cambio de schema."""
+    cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_credentials)")]
+    if "method" not in cols:
+        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN method TEXT")
 
 
 def get_user_by_email(email):
@@ -194,14 +203,14 @@ def count_faces_for_user(user_id):
         return row["n"]
 
 
-def save_webauthn_credential(user_id, credential_id, public_key, sign_count):
+def save_webauthn_credential(user_id, credential_id, public_key, sign_count, method=None):
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, method)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (user_id, credential_id, public_key, sign_count),
+            (user_id, credential_id, public_key, sign_count, method),
         )
 
 
@@ -211,6 +220,16 @@ def get_webauthn_credentials_for_user(user_id):
             "SELECT * FROM webauthn_credentials WHERE user_id = ?", (user_id,)
         ).fetchall()
         return [dict(row) for row in rows]
+
+
+def get_webauthn_methods_for_user(user_id):
+    """Devuelve la lista de metodos FIDO2 configurados (labels legibles)."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT method FROM webauthn_credentials WHERE user_id = ? AND method IS NOT NULL",
+            (user_id,),
+        ).fetchall()
+        return [row["method"] for row in rows]
 
 
 def get_webauthn_credential_by_id(credential_id):

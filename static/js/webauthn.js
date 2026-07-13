@@ -1,12 +1,26 @@
 // Modo B: flujo FIDO2 / WebAuthn real usando la API nativa del navegador.
 //
-// La firma criptografica ocurre localmente, en el autenticador de
-// plataforma (Windows Hello / Touch ID): solo esa firma -nunca la
-// biometria- viaja al servidor.
+// La firma criptografica ocurre localmente, en el autenticador de plataforma
+// (Windows Hello / Touch ID): solo esa firma -nunca la biometria- viaja al
+// servidor. El usuario elige el metodo (huella / rostro / clave de acceso);
+// eso ajusta el authenticatorSelection que pide el servidor.
 (function () {
   const statusLine = document.getElementById("webauthn-status");
   const actionBtn = document.getElementById("webauthn-action");
+  const methodGrid = document.getElementById("method-grid");
   const hasCredential = window.HACKERBANK_HAS_CREDENTIAL === true;
+
+  let selectedMethod = "huella";
+
+  if (methodGrid) {
+    methodGrid.querySelectorAll(".method-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        methodGrid.querySelectorAll(".method-option").forEach((o) => o.classList.remove("active"));
+        opt.classList.add("active");
+        selectedMethod = opt.dataset.method;
+      });
+    });
+  }
 
   function setStatus(text, kind) {
     statusLine.textContent = text;
@@ -55,11 +69,15 @@
   async function registerCredential() {
     setStatus("Solicitando challenge de registro al servidor...");
 
-    const beginResponse = await fetch("/api/webauthn/register/begin", { method: "POST" });
+    const beginResponse = await fetch("/api/webauthn/register/begin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method: selectedMethod }),
+    });
     const optionsJson = await beginResponse.json();
     const publicKey = decodeCreationOptions(optionsJson);
 
-    setStatus("Esperando al autenticador de plataforma (Windows Hello / Touch ID)...");
+    setStatus("Confirmá en tu dispositivo (Windows Hello / Touch ID)...");
 
     const credential = await navigator.credentials.create({ publicKey });
 
@@ -89,18 +107,18 @@
       return false;
     }
 
-    setStatus("Credencial registrada. Ahora podes autenticarte.", "success");
+    setStatus("Método registrado. Ya podés autenticarte con FIDO2.", "success");
     return true;
   }
 
   async function authenticate() {
-    setStatus("Solicitando challenge de autenticacion al servidor...");
+    setStatus("Solicitando challenge de autenticación al servidor...");
 
     const beginResponse = await fetch("/api/webauthn/authenticate/begin", { method: "POST" });
     const optionsJson = await beginResponse.json();
     const publicKey = decodeRequestOptions(optionsJson);
 
-    setStatus("Esperando confirmacion biometrica local...");
+    setStatus("Confirmá en tu dispositivo...");
 
     const assertion = await navigator.credentials.get({ publicKey });
     const assertionResponse = assertion.response;
@@ -128,7 +146,7 @@
     const result = await completeResponse.json();
 
     if (!result.ok) {
-      setStatus("Autenticacion fallida: " + result.error, "error");
+      setStatus("Autenticación fallida: " + result.error, "error");
       return;
     }
 
@@ -142,8 +160,7 @@
       if (!hasCredential) {
         const registered = await registerCredential();
         if (registered) {
-          actionBtn.textContent = "Autenticarme con FIDO2";
-          actionBtn.dataset.state = "authenticate";
+          setTimeout(() => { window.location.reload(); }, 900);
         }
       } else {
         await authenticate();
@@ -158,11 +175,5 @@
   if (!window.PublicKeyCredential) {
     setStatus("Este navegador no soporta WebAuthn.", "error");
     actionBtn.disabled = true;
-  } else if (hasCredential) {
-    actionBtn.textContent = "Autenticarme con FIDO2";
-    actionBtn.dataset.state = "authenticate";
-  } else {
-    actionBtn.textContent = "Registrar credencial FIDO2";
-    actionBtn.dataset.state = "register";
   }
 })();

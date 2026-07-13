@@ -5,8 +5,13 @@
   <div class="auth-card auth-card--wide">
     <div class="auth-card__title">Crear tu cuenta</div>
     <div class="auth-card__subtitle">
-      Abrí tu cuenta en HackerBank y registrá tu rostro para poder ingresar
-      después con la cara.
+      Abrí tu cuenta, registrá tu rostro y elegí cómo vas a autenticarte.
+    </div>
+
+    <div class="stepper" id="stepper">
+      <span class="stepper__dot active" data-step="1">1<i>Datos</i></span>
+      <span class="stepper__dot" data-step="2">2<i>Rostro</i></span>
+      <span class="stepper__dot" data-step="3">3<i>Seguridad</i></span>
     </div>
 
     <div class="form-error" id="signup-error"></div>
@@ -51,6 +56,47 @@
       </button>
     </div>
 
+    <!-- Paso 3: metodo de autenticacion futura (FIDO2, opcional) -->
+    <div id="signup-method" class="auth-pane" style="display:none;">
+      <p class="auth-pane__text">
+        ¡Cuenta creada! Elegí cómo querés autenticarte en el futuro con FIDO2
+        (opcional; siempre vas a poder entrar con tu rostro).
+      </p>
+
+      <div class="method-grid" id="signup-method-grid">
+        <button type="button" class="method-option active" data-method="huella">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/></svg>
+          </span>
+          <span class="method-option__name">Huella</span>
+        </button>
+        <button type="button" class="method-option" data-method="rostro">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0"/></svg>
+          </span>
+          <span class="method-option__name">Rostro</span>
+        </button>
+        <button type="button" class="method-option" data-method="passkey">
+          <span class="method-option__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="10" r="4"/><path d="M11 12l7 7v2h-3l-1-1h-2v-2l-1-1"/></svg>
+          </span>
+          <span class="method-option__name">Clave de acceso</span>
+        </button>
+      </div>
+      <p class="method-note">
+        Tu dispositivo decide qué biometría usar (Windows Hello, Touch ID). La
+        <b>clave de acceso</b> es una passkey que puede sincronizar entre dispositivos.
+      </p>
+
+      <div class="status-line" id="signup-method-status"></div>
+      <button type="button" class="btn btn--gold btn--full" id="signup-method-register">
+        Registrar método FIDO2
+      </button>
+      <button type="button" class="btn btn--full btn--ghost" id="signup-method-skip">
+        Omitir por ahora
+      </button>
+    </div>
+
     <div class="auth-alt">
       ¿Ya tenés cuenta? <a href="{{ url_for('login_page') }}">Ingresá</a>
     </div>
@@ -58,5 +104,6 @@
 </div>
 {% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/webauthn-register.js') }}"></script>
 <script src="{{ url_for('static', filename='js/signup.js') }}"></script>
 {% endblock %}

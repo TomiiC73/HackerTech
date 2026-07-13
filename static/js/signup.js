@@ -1,26 +1,39 @@
-// Alta de cuenta: paso 1 (datos) -> paso 2 (escaneo de rostro) -> crear cuenta.
+// Alta de cuenta: paso 1 (datos) -> paso 2 (rostro) -> paso 3 (metodo FIDO2, opcional).
 (function () {
   const form = document.getElementById("signup-form");
   const facePane = document.getElementById("signup-face");
+  const methodPane = document.getElementById("signup-method");
   const errorBox = document.getElementById("signup-error");
   const video = document.getElementById("signup-video");
   const canvas = document.getElementById("signup-canvas");
   const statusLine = document.getElementById("signup-status");
   const captureBtn = document.getElementById("signup-capture");
 
+  const methodGrid = document.getElementById("signup-method-grid");
+  const methodStatus = document.getElementById("signup-method-status");
+  const methodRegisterBtn = document.getElementById("signup-method-register");
+  const methodSkipBtn = document.getElementById("signup-method-skip");
+  const stepperDots = document.querySelectorAll(".stepper__dot");
+
   const SAMPLES_TO_CAPTURE = 5;
   const CAPTURE_GAP_MS = 350;
 
   let stream = null;
   let accountData = null;
+  let nextUrl = "/dashboard";
+  let selectedMethod = "huella";
 
   function showError(msg) {
     errorBox.textContent = msg;
     errorBox.classList.add("visible");
   }
+  function clearError() { errorBox.classList.remove("visible"); }
 
-  function clearError() {
-    errorBox.classList.remove("visible");
+  function goToStep(n) {
+    stepperDots.forEach((d) => d.classList.toggle("active", Number(d.dataset.step) <= n));
+    form.style.display = n === 1 ? "" : "none";
+    facePane.style.display = n === 2 ? "" : "none";
+    methodPane.style.display = n === 3 ? "" : "none";
   }
 
   // --- Paso 1: datos de la cuenta ---
@@ -44,8 +57,7 @@
       return;
     }
 
-    form.style.display = "none";
-    facePane.style.display = "";
+    goToStep(2);
     await startCamera();
   });
 
@@ -67,7 +79,6 @@
     const context = canvas.getContext("2d");
     canvas.width = video.videoWidth || 400;
     canvas.height = video.videoHeight || 400;
-    // Frame crudo (sin el espejado de la vista previa, que es solo CSS).
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/jpeg", 0.9);
   }
@@ -103,13 +114,44 @@
         return;
       }
 
-      statusLine.textContent = "¡Cuenta creada! Entrando...";
-      statusLine.className = "status-line success";
+      nextUrl = data.next || "/dashboard";
       if (stream) stream.getTracks().forEach((t) => t.stop());
-      setTimeout(() => { window.location.href = data.next; }, 700);
+      goToStep(3);   // cuenta creada + logueado: ofrecer metodo FIDO2
     } catch (err) {
       showError("Error de conexión con el servidor.");
       captureBtn.disabled = false;
+    }
+  });
+
+  // --- Paso 3: metodo FIDO2 (opcional) ---
+  if (methodGrid) {
+    methodGrid.querySelectorAll(".method-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        methodGrid.querySelectorAll(".method-option").forEach((o) => o.classList.remove("active"));
+        opt.classList.add("active");
+        selectedMethod = opt.dataset.method;
+      });
+    });
+  }
+
+  methodSkipBtn.addEventListener("click", () => { window.location.href = nextUrl; });
+
+  methodRegisterBtn.addEventListener("click", async () => {
+    methodRegisterBtn.disabled = true;
+    methodSkipBtn.disabled = true;
+    methodStatus.textContent = "Confirmá en tu dispositivo (Windows Hello / Touch ID)...";
+    methodStatus.className = "status-line";
+
+    const result = await window.registerWebAuthnMethod(selectedMethod);
+    if (result.ok) {
+      methodStatus.textContent = "¡Método registrado! Entrando...";
+      methodStatus.className = "status-line success";
+      setTimeout(() => { window.location.href = nextUrl; }, 700);
+    } else {
+      methodStatus.textContent = "No se pudo registrar: " + result.error + ". Podés omitir y usar tu rostro.";
+      methodStatus.className = "status-line error";
+      methodRegisterBtn.disabled = false;
+      methodSkipBtn.disabled = false;
     }
   });
 

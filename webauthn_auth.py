@@ -30,14 +30,47 @@ from webauthn.helpers.structs import (
 import config
 import db
 
-_PLATFORM_AUTHENTICATOR_SELECTION = AuthenticatorSelectionCriteria(
-    authenticator_attachment=AuthenticatorAttachment.PLATFORM,
-    resident_key=ResidentKeyRequirement.PREFERRED,
-    user_verification=UserVerificationRequirement.REQUIRED,
-)
+# Metodos FIDO2 que puede elegir el usuario. Nota honesta: WebAuthn NO permite
+# forzar "huella" vs "rostro" -eso lo decide el dispositivo segun lo que el
+# usuario tenga configurado en Windows Hello / Touch ID-. Lo que si es realmente
+# distinto es un autenticador de plataforma (huella/rostro/PIN del equipo) vs
+# una "clave de acceso" (passkey = credencial descubrible/residente que puede
+# sincronizar entre dispositivos). Guardamos ademas el label elegido para
+# mostrarlo despues.
+_METHODS = {
+    "huella": {
+        "label": "Huella digital",
+        "attachment": AuthenticatorAttachment.PLATFORM,
+        "resident_key": ResidentKeyRequirement.DISCOURAGED,
+    },
+    "rostro": {
+        "label": "Reconocimiento facial",
+        "attachment": AuthenticatorAttachment.PLATFORM,
+        "resident_key": ResidentKeyRequirement.DISCOURAGED,
+    },
+    "passkey": {
+        "label": "Clave de acceso (passkey)",
+        "attachment": None,  # permite plataforma o passkey en otro dispositivo
+        "resident_key": ResidentKeyRequirement.REQUIRED,
+    },
+}
+_DEFAULT_METHOD = "huella"
 
 
-def build_registration_options(user, rp_id):
+def method_label(method_key):
+    return _METHODS.get(method_key, _METHODS[_DEFAULT_METHOD])["label"]
+
+
+def _authenticator_selection(method_key):
+    spec = _METHODS.get(method_key, _METHODS[_DEFAULT_METHOD])
+    return AuthenticatorSelectionCriteria(
+        authenticator_attachment=spec["attachment"],
+        resident_key=spec["resident_key"],
+        user_verification=UserVerificationRequirement.REQUIRED,
+    )
+
+
+def build_registration_options(user, rp_id, method=_DEFAULT_METHOD):
     existing_credentials = db.get_webauthn_credentials_for_user(user["id"])
     exclude_credentials = [
         PublicKeyCredentialDescriptor(id=cred["credential_id"])
@@ -50,7 +83,7 @@ def build_registration_options(user, rp_id):
         user_id=str(user["id"]).encode("utf-8"),
         user_name=user["email"],
         user_display_name=user["full_name"],
-        authenticator_selection=_PLATFORM_AUTHENTICATOR_SELECTION,
+        authenticator_selection=_authenticator_selection(method),
         exclude_credentials=exclude_credentials,
     )
 
@@ -58,7 +91,7 @@ def build_registration_options(user, rp_id):
     return webauthn.options_to_json(options)
 
 
-def complete_registration(user, credential_json, rp_id, origin):
+def complete_registration(user, credential_json, rp_id, origin, method=_DEFAULT_METHOD):
     challenge_row = db.get_webauthn_challenge(user["id"], purpose="register")
     if challenge_row is None:
         raise ValueError("No hay un challenge de registro pendiente para este usuario.")
@@ -78,6 +111,7 @@ def complete_registration(user, credential_json, rp_id, origin):
         credential_id=verification.credential_id,
         public_key=verification.credential_public_key,
         sign_count=verification.sign_count,
+        method=method_label(method),
     )
     # El challenge ya se uso: se descarta para que no pueda reutilizarse.
     db.delete_webauthn_challenge(user["id"], purpose="register")

@@ -75,6 +75,12 @@
       <div class="label">Estado</div>
       <div class="value"><span class="status-pill">{{ account.status }}</span></div>
     </div>
+    <div class="account-meta__item">
+      <div class="label">Autenticación FIDO2</div>
+      <div class="value">
+        {% if fido2_methods %}{{ fido2_methods | join(', ') }}{% else %}No configurada{% endif %}
+      </div>
+    </div>
   </div>
 
   <div class="dash__grid">
