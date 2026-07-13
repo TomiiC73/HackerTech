@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Verificación facial — HackerBank{% endblock %}
+{% block content %}
+<div class="face-shell">
+  <div class="badge">Modo A &middot; Autenticación facial</div>
+  <h1 class="face-shell__title">Verificá tu identidad</h1>
+  <p class="face-shell__subtitle">
+    Encuadrá tu rostro dentro del marco. La verificación es continua:
+    no hace falta presionar ningún botón.
+  </p>
+
+  <div class="camera-frame">
+    <video id="camera-video" autoplay playsinline muted></video>
+    <canvas id="camera-canvas" style="display:none;"></canvas>
+    <div class="camera-frame__overlay"></div>
+  </div>
+
+  <div class="status-line" id="face-status">Iniciando cámara...</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/face.js') }}"></script>
+{% endblock %}

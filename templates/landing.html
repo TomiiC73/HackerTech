@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+{% block title %}HackerBank — Banca digital{% endblock %}
+{% block content %}
+<header class="hero">
+  <img class="hero__skyline" src="{{ url_for('static', filename='img/skyline.svg') }}" alt="" aria-hidden="true">
+  <div class="badge">HackerTech &middot; UTN-FRC</div>
+  <h1 class="hero__title">Banca digital.<br>Seguridad <span>a prueba real.</span></h1>
+  <div class="hero__actions">
+    <a href="{{ url_for('login_page') }}" class="btn btn--gold">Ingresar a HackerBank</a>
+    <a href="#productos" class="btn">Conocer nuestros productos</a>
+  </div>
+</header>
+
+<div class="rate-ticker">
+  <div class="rate-ticker__item">
+    <div class="rate-ticker__pair">Dólar &middot; USD/ARS</div>
+    <div class="rate-ticker__values">
+      <div><b>Compra</b><span>$ {{ usd_buy | currency }}</span></div>
+      <div><b>Venta</b><span>$ {{ usd_sell | currency }}</span></div>
+    </div>
+  </div>
+  <div class="rate-ticker__item">
+    <div class="rate-ticker__pair">Euro &middot; EUR/ARS</div>
+    <div class="rate-ticker__values">
+      <div><b>Compra</b><span>$ {{ eur_buy | currency }}</span></div>
+      <div><b>Venta</b><span>$ {{ eur_sell | currency }}</span></div>
+    </div>
+  </div>
+  <div class="rate-ticker__item">
+    <div class="rate-ticker__pair">Plazo fijo 30 días</div>
+    <div class="rate-ticker__values">
+      <div><b>TNA</b><span>{{ fixed_deposit_tna }}%</span></div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="split-block">
+      <div>
+        <div class="section__eyebrow">Por qué HackerBank</div>
+        <h2 class="section__title">El banco pensado para tu día a día</h2>
+        <p class="section__text">
+          Más de un siglo de experiencia bancaria, ahora en tu bolsillo. Sin filas, sin
+          papeles y con la seguridad como prioridad número uno.
+        </p>
+      </div>
+      <div class="split-block__art">
+        <div class="growth-illustration">
+          <svg viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+            <line x1="20" y1="220" x2="240" y2="220" stroke="#0f2340" stroke-opacity="0.15" stroke-width="2"/>
+            <g fill="#a9822f">
+              <rect x="30" y="160" width="34" height="60" fill-opacity="0.35"/>
+              <rect x="80" y="130" width="34" height="90" fill-opacity="0.5"/>
+              <rect x="130" y="90" width="34" height="130" fill-opacity="0.7"/>
+              <rect x="180" y="55" width="34" height="165" fill-opacity="0.9"/>
+            </g>
+            <polyline points="47,150 97,120 147,80 197,45" fill="none" stroke="#0f2340" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="47" cy="150" r="5" fill="#0f2340"/>
+            <circle cx="97" cy="120" r="5" fill="#0f2340"/>
+            <circle cx="147" cy="80" r="5" fill="#0f2340"/>
+            <circle cx="197" cy="45" r="5" fill="#0f2340"/>
+            <path d="M197,45 l14,-4 l-2,14 z" fill="#0f2340"/>
+            <g transform="translate(155,15)">
+              <ellipse cx="30" cy="24" rx="26" ry="13" fill="#ffffff" stroke="#0f2340" stroke-width="2"/>
+              <ellipse cx="30" cy="18" rx="26" ry="13" fill="#a9822f" fill-opacity="0.25" stroke="#0f2340" stroke-width="2"/>
+              <ellipse cx="30" cy="12" rx="26" ry="13" fill="#a9822f" fill-opacity="0.45" stroke="#0f2340" stroke-width="2"/>
+              <text x="30" y="17" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f2340">$</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="feature-card__title">Seguridad bancaria</div>
+        <p class="feature-card__text">Cifrado de extremo a extremo y monitoreo antifraude las 24 horas.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <div class="feature-card__title">Atención 24/7</div>
+        <p class="feature-card__text">Un equipo humano disponible todos los días del año, a cualquier hora.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M9 15l6-6M9.5 10a.5.5 0 100-1 .5.5 0 000 1zM14.5 15a.5.5 0 100-1 .5.5 0 000 1z"/></svg>
+        </div>
+        <div class="feature-card__title">Sin costos ocultos</div>
+        <p class="feature-card__text">Mantenimiento de cuenta bonificado y comisiones siempre a la vista.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.3 6.8 19.1l1-5.8-4.3-4.1 5.9-.9L12 3z"/></svg>
+        </div>
+        <div class="feature-card__title">La app mejor calificada</div>
+        <p class="feature-card__text">4.8/5 en las tiendas de aplicaciones, según usuarios verificados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="productos">
+  <div class="container">
+    <div class="section__eyebrow">Productos</div>
+    <h2 class="section__title">Todo lo que necesitás de tu banco</h2>
+    <p class="section__text">
+      Tarjetas, préstamos y plazos fijos pensados para acompañarte. Simulá tu producto
+      antes de solicitarlo.
+    </p>
+
+    <div class="product-grid">
+      <div class="product-card">
+        <div class="product-card__icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+        </div>
+        <div class="product-card__eyebrow">Tarjetas</div>
+        <div class="product-card__title">Visa &amp; Mastercard</div>
+        <p class="product-card__text">
+          Crédito y débito sin costo de mantenimiento el primer año. Millas, cuotas sin
+          interés en comercios adheridos y alertas de consumo en tiempo real.
+        </p>
+        <div class="product-card__rate">{{ credit_card_tna }}% <small>TNA crédito</small></div>
+        <a href="{{ url_for('login_page') }}" class="btn btn--sm">Conocer más</a>
+      </div>
+
+      <div class="product-card">
+        <div class="product-card__icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8.5" cy="8.5" r="5.5"/><circle cx="15" cy="15" r="5.5"/></svg>
+        </div>
+        <div class="product-card__eyebrow">Préstamos</div>
+        <div class="product-card__title">Préstamos personales</div>
+        <p class="product-card__text">
+          Hasta $ {{ loan_max_ars | currency }} con cuotas fijas en pesos y acreditación
+          en el día para clientes con cuenta sueldo.
+        </p>
+        <div class="product-card__rate">{{ loan_tna }}% <small>TNA</small></div>
+        <a href="{{ url_for('login_page') }}" class="btn btn--sm">Simular préstamo</a>
+      </div>
+
+      <div class="product-card">
+        <div class="product-card__icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        </div>
+        <div class="product-card__eyebrow">Inversiones</div>
+        <div class="product-card__title">Plazo fijo online</div>
+        <p class="product-card__text">
+          Constituilo en segundos desde la app, sin mínimos elevados. Renovación
+          automática opcional y disponible en pesos o dólares.
+        </p>
+        <div class="product-card__rate">{{ fixed_deposit_tna }}% <small>TNA &middot; {{ fixed_deposit_min_days }} días mín.</small></div>
+        <a href="{{ url_for('login_page') }}" class="btn btn--sm">Invertir ahora</a>
+      </div>
+
+      <div class="product-card">
+        <div class="product-card__icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="product-card__eyebrow">Protección</div>
+        <div class="product-card__title">Seguros HackerBank</div>
+        <p class="product-card__text">
+          Seguro de vida, de hogar y de dispositivos móviles, con alta 100% online
+          y sin papeleo.
+        </p>
+        <div class="product-card__rate">Desde $ 4.500 <small>por mes</small></div>
+        <a href="{{ url_for('login_page') }}" class="btn btn--sm">Ver seguros</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="app">
+  <div class="container split-block">
+    <div>
+      <div class="section__eyebrow">App móvil</div>
+      <h2 class="section__title">Tu banco en la palma de la mano</h2>
+      <p class="section__text">
+        Gestioná tu cuenta, transferí sin CBU con solo el alias y pagá servicios desde
+        donde estés. Disponible para iOS y Android.
+      </p>
+
+      <div class="app-download">
+        <a href="{{ url_for('login_page') }}" class="app-download__btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg>
+          <span class="lines"><small>Descargar en</small><strong>App Store</strong></span>
+        </a>
+        <a href="{{ url_for('login_page') }}" class="app-download__btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg>
+          <span class="lines"><small>Disponible en</small><strong>Google Play</strong></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="split-block__art">
+      <div class="phone-mockup">
+        <svg viewBox="0 0 260 520" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="6" width="248" height="508" rx="34" fill="#ffffff" stroke="#0f2340" stroke-width="3"/>
+          <rect x="100" y="20" width="60" height="6" rx="3" fill="#0f2340" opacity="0.35"/>
+          <text x="130" y="72" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f2340" letter-spacing="2">HACKERBANK</text>
+
+          <text x="30" y="118" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#8a92a1" letter-spacing="1">SALDO DISPONIBLE</text>
+          <text x="30" y="150" font-family="Helvetica, Arial, sans-serif" font-size="25" font-weight="700" fill="#0f2340">$ &#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;,50</text>
+
+          <g fill="#a9822f">
+            <rect x="30" y="228" width="16" height="42"/>
+            <rect x="56" y="208" width="16" height="62"/>
+            <rect x="82" y="188" width="16" height="82"/>
+            <rect x="108" y="198" width="16" height="72"/>
+            <rect x="134" y="168" width="16" height="102"/>
+          </g>
+          <line x1="30" y1="270" x2="150" y2="270" stroke="#0f2340" stroke-opacity="0.15"/>
+
+          <rect x="30" y="300" width="200" height="80" rx="10" fill="#0f2340"/>
+          <text x="46" y="332" font-family="Consolas, monospace" font-size="12" fill="#ffffff" letter-spacing="2">&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; 4821</text>
+          <text x="46" y="360" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#a9822f" letter-spacing="1">VISA</text>
+
+          <g fill="#0f2340" opacity="0.5">
+            <circle cx="60" cy="470" r="6"/>
+            <circle cx="105" cy="470" r="6"/>
+            <circle cx="150" cy="470" r="6"/>
+            <circle cx="195" cy="470" r="6"/>
+          </g>
+          <circle cx="60" cy="470" r="6" fill="#a9822f"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="seguridad">
+  <div class="container split-block">
+    <div>
+      <div class="section__eyebrow">Seguridad</div>
+      <h2 class="section__title">Tu seguridad es nuestra prioridad</h2>
+      <p class="section__text">
+        Combinamos autenticación biométrica, monitoreo de fraude en tiempo real y
+        cifrado de extremo a extremo en cada operación.
+      </p>
+      <div class="info-box">
+        <div class="info-box__title">Recomendaciones para vos</div>
+        <ul>
+          <li>HackerBank nunca te va a pedir tu clave completa por teléfono, email o WhatsApp.</li>
+          <li>Activá la autenticación en dos pasos en Configuración &gt; Seguridad.</li>
+          <li>Verificá siempre que la URL empiece con el dominio oficial antes de ingresar tus datos.</li>
+          <li>Ante cualquier consulta, contactanos solo por los canales oficiales listados abajo.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="split-block__art">
+      <div class="shield-illustration">
+        <svg viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg">
+          <path d="M130 10 L230 45 V140 C230 210 190 255 130 290 C70 255 30 210 30 140 V45 Z" fill="#0f2340" fill-opacity="0.04" stroke="#0f2340" stroke-width="3"/>
+          <g fill="none" stroke="#a9822f" stroke-width="2.5" stroke-linecap="round">
+            <path d="M90 150 a40 40 0 1 1 80 0"/>
+            <path d="M100 150 a30 30 0 1 1 60 0"/>
+            <path d="M110 150 a20 20 0 1 1 40 0"/>
+          </g>
+          <circle cx="130" cy="150" r="5" fill="#a9822f"/>
+          <circle cx="195" cy="215" r="34" fill="#ffffff" stroke="#0f2340" stroke-width="3"/>
+          <rect x="182" y="208" width="26" height="20" rx="3" fill="none" stroke="#0f2340" stroke-width="2.5"/>
+          <path d="M188 208 v-8 a7 7 0 0 1 14 0 v8" fill="none" stroke="#0f2340" stroke-width="2.5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ayuda">
+  <div class="container">
+    <div class="section__eyebrow">Ayuda</div>
+    <div class="section__title-row">
+      <div class="section-icon-badge">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 10a4 4 0 118 0c0 2-3 2.5-3 5"/><circle cx="13" cy="19" r="1" fill="currentColor" stroke="none"/><path d="M21 12a9 9 0 11-9-9"/></svg>
+      </div>
+      <h2 class="section__title">Preguntas frecuentes</h2>
+    </div>
+
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>¿Cómo abro una cuenta en HackerBank?</summary>
+        <p>Ingresá con tu email y contraseña, verificá tu identidad y en minutos vas a tener tu CBU y alias listos para usar.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Tiene costo el mantenimiento de la cuenta?</summary>
+        <p>No. La cuenta HackerBank no tiene costo de mantenimiento y las tarjetas están bonificadas durante el primer año.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Qué hago si sospecho de un fraude?</summary>
+        <p>Comunicate de inmediato a nuestra línea de atención o bloqueá tu tarjeta desde la app. Nunca vamos a pedirte tu clave para resolverlo.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Cómo funciona la verificación en dos pasos?</summary>
+        <p>Podés elegir entre verificación facial o un autenticador de plataforma compatible con el estándar FIDO2/WebAuthn, como Windows Hello o Touch ID.</p>
+      </details>
+      <details class="faq-item">
+        <summary>¿Puedo operar en dólares?</summary>
+        <p>Sí, todas las cuentas permiten operar en pesos y dólares, con cotización actualizada dentro de la app.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sucursales">
+  <div class="container">
+    <div class="split-block">
+      <div>
+        <div class="section__eyebrow">Sucursales y atención</div>
+        <h2 class="section__title">Estamos donde nos necesités</h2>
+        <p class="section__text">
+          Atención telefónica: <b>{{ support_phone }}</b><br>
+          {{ support_hours }}
+        </p>
+      </div>
+      <div class="split-block__art">
+        <div class="map-illustration">
+          <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="300" height="300" fill="#0f2340" fill-opacity="0.03"/>
+            <g stroke="#0f2340" stroke-opacity="0.12" stroke-width="2">
+              <line x1="0" y1="75" x2="300" y2="75"/>
+              <line x1="0" y1="155" x2="300" y2="155"/>
+              <line x1="0" y1="235" x2="300" y2="235"/>
+              <line x1="75" y1="0" x2="75" y2="300"/>
+              <line x1="150" y1="0" x2="150" y2="300"/>
+              <line x1="225" y1="0" x2="225" y2="300"/>
+            </g>
+            <path d="M90,110 Q140,55 170,115 T235,195" fill="none" stroke="#a9822f" stroke-width="2.5" stroke-dasharray="7 7" stroke-linecap="round"/>
+
+            <ellipse cx="90" cy="112" rx="9" ry="3.5" fill="#0f2340" fill-opacity="0.15"/>
+            <g transform="translate(66,68)">
+              <path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z" fill="#0f2340" transform="scale(2.2)"/>
+              <circle cx="26.4" cy="19.8" r="5.5" fill="#ffffff"/>
+            </g>
+
+            <ellipse cx="170" cy="82" rx="9" ry="3.5" fill="#0f2340" fill-opacity="0.15"/>
+            <g transform="translate(146,38)">
+              <path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z" fill="#0f2340" transform="scale(2.2)"/>
+              <circle cx="26.4" cy="19.8" r="5.5" fill="#ffffff"/>
+            </g>
+
+            <ellipse cx="235" cy="192" rx="9" ry="3.5" fill="#0f2340" fill-opacity="0.15"/>
+            <g transform="translate(211,148)">
+              <path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z" fill="#a9822f" transform="scale(2.2)"/>
+              <circle cx="26.4" cy="19.8" r="5.5" fill="#ffffff"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="branch-grid">
+      {% for branch in branches %}
+      <div class="branch-card">
+        <div class="branch-card__name">
+          <svg class="pin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-7.5 7-12a7 7 0 10-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          {{ branch.name }}
+        </div>
+        <div class="branch-card__address">{{ branch.address }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="trust-strip">
+  <div class="trust-item">
+    <div class="trust-item__icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
+    </div>
+    <div class="trust-item__title">Entidad Financiera N.° 000</div>
+    <div class="trust-item__text">Registro simulado para fines del laboratorio educativo.</div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-item__icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+    </div>
+    <div class="trust-item__title">Garantía de depósitos</div>
+    <div class="trust-item__text">Sistema de garantía simulado, hasta el tope vigente por titular.</div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-item__icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></svg>
+    </div>
+    <div class="trust-item__title">Auditado anualmente</div>
+    <div class="trust-item__text">Procesos revisados por un comité de seguridad independiente.</div>
+  </div>
+</div>
+{% endblock %}

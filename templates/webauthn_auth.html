@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}FIDO2 — HackerBank{% endblock %}
+{% block content %}
+<div class="face-shell">
+  <div class="badge">Modo B &middot; FIDO2 / WebAuthn</div>
+  <h1 class="face-shell__title">Autenticación segura</h1>
+  <p class="face-shell__subtitle">
+    Vas a usar el autenticador de plataforma de tu equipo (Windows Hello, Touch ID
+    o llave de seguridad). La biometría se procesa localmente y nunca llega a este servidor.
+  </p>
+
+  <div class="status-line" id="webauthn-status">Listo para comenzar.</div>
+  <button class="btn btn--gold" id="webauthn-action">
+    {% if has_credential %}Autenticarme con FIDO2{% else %}Registrar credencial FIDO2{% endif %}
+  </button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.HACKERBANK_HAS_CREDENTIAL = {{ 'true' if has_credential else 'false' }};
+</script>
+<script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
+{% endblock %}
