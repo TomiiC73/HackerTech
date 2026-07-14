@@ -17,12 +17,18 @@ import config
 import db
 import face_auth
 import public_tunnel
+import rate_limit
 import webauthn_auth
 
 SERVER_PORT = 5000
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = config.FLASK_SECRET_KEY
+app.config.update(
+    SECRET_KEY=config.FLASK_SECRET_KEY,
+    SESSION_COOKIE_HTTPONLY=config.SESSION_COOKIE_HTTPONLY,
+    SESSION_COOKIE_SAMESITE=config.SESSION_COOKIE_SAMESITE,
+    SESSION_COOKIE_SECURE=config.SESSION_COOKIE_SECURE,
+)
 
 db.init_db()
 
@@ -132,10 +138,12 @@ def signup_page():
 
 
 @app.route("/face")
+@require_pre_auth
 def face_page():
-    # Modo A ahora es identificacion 1:N: la camara es el paso de identidad,
-    # no un segundo factor. Por eso esta pagina es publica (no requiere un
-    # usuario ya identificado por contrasena).
+    # Modo A es un segundo factor: solo se llega aca tras validar la
+    # contrasena (primer factor) eligiendo el modo facial.
+    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_FACE:
+        return redirect(url_for("login_page"))
     return render_template("face_auth.html")
 
 
@@ -228,32 +236,58 @@ def api_login():
     payload = request.get_json(silent=True) or {}
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password", "")
+    mode = payload.get("mode", config.AUTH_MODE_FACE)
+    if mode not in (config.AUTH_MODE_FACE, config.AUTH_MODE_WEBAUTHN):
+        return jsonify(ok=False, error="Modo de autenticación inválido."), 400
+
+    # Proteccion de fuerza bruta: se limita por cuenta atacada (email).
+    rate_key = f"login:{email}"
+    if rate_limit.is_blocked(rate_key, config.LOGIN_MAX_ATTEMPTS, config.LOGIN_WINDOW_SECONDS):
+        return jsonify(ok=False, error="Demasiados intentos. Esperá unos minutos."), 429
 
     user = db.get_user_by_email(email)
     if user is None or not check_password_hash(user["password_hash"], password):
+        rate_limit.record_failure(rate_key, config.LOGIN_WINDOW_SECONDS)
         return jsonify(ok=False, error="Email o contraseña incorrectos."), 401
 
-    # Primer factor (contrasena) superado; falta el segundo factor FIDO2.
+    rate_limit.reset(rate_key)
+
+    # Primer factor (contrasena) superado; falta el segundo factor biometrico
+    # segun el modo elegido. session.clear() regenera el contenido de sesion
+    # (mitiga fijacion de sesion).
     session.clear()
     session[config.SESSION_KEY_PRE_AUTH] = user["id"]
-    session[config.SESSION_KEY_AUTH_MODE] = config.AUTH_MODE_WEBAUTHN
-    return jsonify(ok=True, next=url_for("webauthn_page"))
+    session[config.SESSION_KEY_AUTH_MODE] = mode
+
+    next_url = url_for("face_page") if mode == config.AUTH_MODE_FACE else url_for("webauthn_page")
+    return jsonify(ok=True, next=next_url)
 
 
 # --------------------------------------------------------------------
-# API: Modo A - identificacion facial 1:N contra los rostros guardados
+# API: Modo A - segundo factor facial (INSEGURO: sin liveness).
+# Verificacion 1:1 contra los rostros del usuario ya identificado por
+# contrasena. Sigue siendo vulnerable a mostrar una foto de ese usuario:
+# esa es la debilidad pedagogica del Modo A, a proposito.
 # --------------------------------------------------------------------
-@app.route("/api/face/identify", methods=["POST"])
-def api_face_identify():
+@app.route("/api/face/verify", methods=["POST"])
+@require_pre_auth
+def api_face_verify():
+    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_FACE:
+        return jsonify(ok=False, error="Modo incorrecto."), 400
+
     payload = request.get_json(silent=True) or {}
     frame_b64 = payload.get("frame")
     if not frame_b64:
-        return jsonify(ok=False, error="Falta el frame de camara."), 400
+        return jsonify(ok=False, error="Falta el frame de cámara."), 400
 
-    result = face_auth.identify(frame_b64, db.get_all_faces())
+    user = _current_user()
+    user_faces = [(user["id"], face_png) for face_png in db.get_faces_for_user(user["id"])]
+    result = face_auth.identify(frame_b64, user_faces)
 
+    # Segundo factor superado: recien aca queda autenticado.
     if result.success:
-        _login_user(result.user_id, via=config.AUTH_MODE_FACE)
+        session[config.SESSION_KEY_AUTHENTICATED] = True
+        session[config.SESSION_KEY_AUTH_VIA] = config.AUTH_MODE_FACE
 
     return jsonify(
         ok=result.success,
@@ -290,7 +324,10 @@ def api_webauthn_register_complete():
     try:
         webauthn_auth.complete_registration(user, credential_json, rp_id, origin, method)
     except Exception as error:
-        return jsonify(ok=False, error=str(error)), 400
+        # No se filtra el detalle interno al cliente (CODING_STANDARDS): se loguea
+        # server-side para debugging y se responde un mensaje generico.
+        app.logger.warning("Registro FIDO2 fallido (user_id=%s): %s", user["id"], error)
+        return jsonify(ok=False, error="No se pudo completar el registro FIDO2."), 400
     return jsonify(ok=True)
 
 
@@ -315,7 +352,10 @@ def api_webauthn_authenticate_complete():
     try:
         webauthn_auth.complete_authentication(user, credential_json, rp_id, origin)
     except Exception as error:
-        return jsonify(ok=False, error=str(error)), 400
+        # Firma invalida / credencial desconocida / sign_count sospechoso:
+        # se loguea el detalle y se responde generico (CODING_STANDARDS).
+        app.logger.warning("Autenticacion FIDO2 fallida (user_id=%s): %s", user["id"], error)
+        return jsonify(ok=False, error="No se pudo verificar tu credencial FIDO2."), 400
 
     session[config.SESSION_KEY_AUTHENTICATED] = True
     session[config.SESSION_KEY_AUTH_VIA] = config.AUTH_MODE_WEBAUTHN

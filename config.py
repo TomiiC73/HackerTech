@@ -14,6 +14,21 @@ FLASK_SECRET_KEY = os.environ.get("HACKERBANK_SECRET", "lab-only-insecure-secret
 
 DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hackerbank.db")
 
+# --- Endurecimiento de la cookie de sesion (CODING_STANDARDS: sesiones) ---
+# HttpOnly evita que JavaScript lea la cookie (mitiga robo por XSS).
+# SameSite=Lax mitiga CSRF en peticiones cross-site.
+# Secure obliga HTTPS: se deja configurable porque el lab corre en http
+# local; en produccion (HTTPS/ngrok) poner HACKERBANK_COOKIE_SECURE=1.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = os.environ.get("HACKERBANK_COOKIE_SECURE", "0") == "1"
+
+# --- Proteccion de fuerza bruta en el login (CODING_STANDARDS: Insecure Design) ---
+# Tras LOGIN_MAX_ATTEMPTS fallos dentro de LOGIN_WINDOW_SECONDS para una misma
+# cuenta, se responde 429 hasta que la ventana expire.
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_WINDOW_SECONDS = 300
+
 # --- Rutas de assets usados por la logica de reconocimiento facial ---
 STATIC_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img")
 FACE_REFERENCE_PATH = os.path.join(STATIC_IMG_DIR, "carlos_reference.jpg")

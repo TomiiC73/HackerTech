@@ -1,18 +1,26 @@
-// Login: alterna entre Modo A (rostro) y Modo B (email + contrasena -> FIDO2).
+// Login: contraseña (1er factor) + segundo factor segun el modo elegido.
+//   Modo A -> verificacion facial (insegura, sin liveness) contra tu propia cara.
+//   Modo B -> FIDO2 / WebAuthn.
 (function () {
   const modeOptions = document.querySelectorAll(".mode-switch__option");
-  const paneModoA = document.getElementById("pane-modo_a");
+  const modeDesc = document.getElementById("mode-desc");
   const form = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
   const submitBtn = document.getElementById("login-submit");
 
+  const DESCRIPTIONS = {
+    modo_a: "Primero tu contraseña; después escaneás tu rostro. La verificación facial es insegura a propósito (sin detección de vida).",
+    modo_b: "Primero tu contraseña; después confirmás con FIDO2 (Windows Hello, Touch ID o llave de seguridad).",
+  };
+
+  let selectedMode = "modo_a";
+
   function selectMode(mode) {
+    selectedMode = mode;
     modeOptions.forEach((option) => {
       option.classList.toggle("active", option.dataset.mode === mode);
     });
-    const isFace = mode === "modo_a";
-    paneModoA.style.display = isFace ? "" : "none";
-    form.style.display = isFace ? "none" : "";
+    modeDesc.textContent = DESCRIPTIONS[mode];
     errorBox.classList.remove("visible");
   }
 
@@ -35,7 +43,7 @@
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, mode: selectedMode }),
       });
       const data = await response.json();
 

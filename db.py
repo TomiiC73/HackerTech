@@ -70,14 +70,17 @@ def init_db():
                 credential_id BLOB UNIQUE NOT NULL,
                 public_key BLOB NOT NULL,
                 sign_count INTEGER NOT NULL DEFAULT 0,
-                method TEXT
+                method TEXT,
+                created_at TEXT,
+                last_used_at TEXT
             );
 
             CREATE TABLE IF NOT EXISTS webauthn_challenges (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 challenge BLOB NOT NULL,
-                purpose TEXT NOT NULL
+                purpose TEXT NOT NULL,
+                created_at TEXT
             );
             """
         )
@@ -86,9 +89,17 @@ def init_db():
 
 def _migrate(conn):
     """Migraciones idempotentes para bases ya creadas antes de un cambio de schema."""
-    cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_credentials)")]
-    if "method" not in cols:
+    cred_cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_credentials)")]
+    if "method" not in cred_cols:
         conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN method TEXT")
+    if "created_at" not in cred_cols:
+        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN created_at TEXT")
+    if "last_used_at" not in cred_cols:
+        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN last_used_at TEXT")
+
+    chal_cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_challenges)")]
+    if "created_at" not in chal_cols:
+        conn.execute("ALTER TABLE webauthn_challenges ADD COLUMN created_at TEXT")
 
 
 def get_user_by_email(email):
@@ -203,12 +214,22 @@ def count_faces_for_user(user_id):
         return row["n"]
 
 
+def get_faces_for_user(user_id):
+    """Devuelve las muestras de rostro (PNG) de un usuario, para verificacion 1:1."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT face_data FROM faces WHERE user_id = ?", (user_id,)
+        ).fetchall()
+        return [row["face_data"] for row in rows]
+
+
 def save_webauthn_credential(user_id, credential_id, public_key, sign_count, method=None):
     with get_connection() as conn:
         conn.execute(
             """
-            INSERT INTO webauthn_credentials (user_id, credential_id, public_key, sign_count, method)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO webauthn_credentials
+                (user_id, credential_id, public_key, sign_count, method, created_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
             """,
             (user_id, credential_id, public_key, sign_count, method),
         )
@@ -241,9 +262,14 @@ def get_webauthn_credential_by_id(credential_id):
 
 
 def update_webauthn_sign_count(credential_id, sign_count):
+    """Actualiza el contador anti-clonacion y marca el ultimo uso de la credencial."""
     with get_connection() as conn:
         conn.execute(
-            "UPDATE webauthn_credentials SET sign_count = ? WHERE credential_id = ?",
+            """
+            UPDATE webauthn_credentials
+            SET sign_count = ?, last_used_at = datetime('now')
+            WHERE credential_id = ?
+            """,
             (sign_count, credential_id),
         )
 
@@ -255,7 +281,10 @@ def save_webauthn_challenge(user_id, challenge, purpose):
             (user_id, purpose),
         )
         conn.execute(
-            "INSERT INTO webauthn_challenges (user_id, challenge, purpose) VALUES (?, ?, ?)",
+            """
+            INSERT INTO webauthn_challenges (user_id, challenge, purpose, created_at)
+            VALUES (?, ?, ?, datetime('now'))
+            """,
             (user_id, challenge, purpose),
         )
 

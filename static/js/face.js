@@ -1,8 +1,9 @@
-// Modo A: login por rostro. Captura frames de la webcam y los manda al
-// backend continuamente (sin botones); el servidor los compara 1:N contra
-// todos los rostros registrados e identifica al usuario. La vista previa
-// se muestra espejada (como un selfie), pero el frame que se envia va con
-// la orientacion real de la camara.
+// Modo A: segundo factor facial (tras la contrasena). Captura frames de la
+// webcam y los manda al backend continuamente (sin botones); el servidor los
+// compara 1:1 contra el rostro del usuario ya identificado. Es inseguro a
+// proposito (sin liveness): una foto de ese usuario tambien pasa. La vista
+// previa se muestra espejada (como un selfie), pero el frame que se envia va
+// con la orientacion real de la camara.
 (function () {
   const video = document.getElementById("camera-video");
   const canvas = document.getElementById("camera-canvas");
@@ -48,7 +49,7 @@
     const frame = captureFrame();
 
     try {
-      const response = await fetch("/api/face/identify", {
+      const response = await fetch("/api/face/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ frame }),
