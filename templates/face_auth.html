@@ -1,23 +1,135 @@
-{% extends "base.html" %}
-{% block title %}Verificación facial — HackerBank{% endblock %}
-{% block content %}
-<div class="face-shell">
-  <div class="badge">Modo A &middot; Autenticación facial</div>
-  <h1 class="face-shell__title">Verificá tu identidad</h1>
-  <p class="face-shell__subtitle">
-    Encuadrá tu rostro dentro del marco. La verificación es continua:
-    no hace falta presionar ningún botón.
-  </p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificación facial — HackerBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: { gold: { DEFAULT: '#c9a84c', light: '#e8d38a', dark: '#8f6f27' } },
+      },
+    },
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+  html, body { background: #050507; color: #f5f5f7; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
 
-  <div class="camera-frame">
-    <video id="camera-video" autoplay playsinline muted></video>
-    <canvas id="camera-canvas" style="display:none;"></canvas>
-    <div class="camera-frame__overlay"></div>
+  .glow { position: absolute; border-radius: 9999px; filter: blur(110px); pointer-events: none; }
+
+  .grid-fade {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 30%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 30%, #000 40%, transparent 100%);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(95deg, #f3e3b4 0%, #c9a84c 45%, #8f6f27 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .camera-frame {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    max-width: 80vw;
+    max-height: 80vw;
+    margin: 0.5rem auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #000;
+  }
+  .camera-frame video, .camera-frame canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .camera-frame video { transform: scaleX(-1); }
+  .camera-frame__overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid #c9a84c;
+    box-shadow: 0 0 0 6px rgba(201,168,76,0.12);
+    pointer-events: none;
+    animation: scanPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes scanPulse {
+    0%, 100% { box-shadow: 0 0 0 6px rgba(201,168,76,0.12); }
+    50% { box-shadow: 0 0 0 14px rgba(201,168,76,0.04); }
+  }
+
+  .status-line {
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    color: rgba(245,245,247,0.5);
+    margin-top: 0.5rem;
+    min-height: 1.1rem;
+    text-align: center;
+  }
+  .status-line.error { color: #ff9a9c; }
+  .status-line.success { color: #6ee7a8; }
+</style>
+</head>
+<body class="antialiased min-h-screen">
+
+<a href="{{ url_for('landing') }}" class="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2.5 text-base font-bold tracking-[0.2em] uppercase">
+  <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16 2L29 9V23L16 30L3 23V9L16 2Z" stroke="#c9a84c" stroke-width="1.4"/>
+    <path d="M16 9L22 12.5V19.5L16 23L10 19.5V12.5L16 9Z" stroke="#f5f5f7" stroke-opacity="0.7" stroke-width="1.2"/>
+  </svg>
+  <span>Hacker<span class="text-gradient-gold">Bank</span></span>
+</a>
+
+<div class="relative min-h-screen flex items-center justify-center px-6 py-28 lg:py-16 overflow-hidden">
+  <div class="absolute inset-0 grid-fade"></div>
+  <div class="glow w-[520px] h-[520px] bg-gold/15 -top-40 -left-20"></div>
+  <div class="glow w-[420px] h-[420px] bg-gold/10 bottom-0 right-0"></div>
+
+  <div id="face-card" class="relative glass rounded-3xl p-8 sm:p-10 w-full max-w-md mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs tracking-[0.2em] uppercase text-white/60 mb-6">
+      <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+      Modo A &middot; Autenticación facial
+    </div>
+
+    <div class="text-2xl font-bold mb-2">Verificá tu identidad</div>
+    <div class="text-white/45 text-sm leading-relaxed mb-6">
+      Encuadrá tu rostro dentro del marco. La verificación es continua:
+      no hace falta presionar ningún botón.
+    </div>
+
+    <div class="camera-frame">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <canvas id="camera-canvas" style="display:none;"></canvas>
+      <div class="camera-frame__overlay"></div>
+    </div>
+
+    <div class="status-line" id="face-status">Iniciando cámara...</div>
   </div>
-
-  <div class="status-line" id="face-status">Iniciando cámara...</div>
 </div>
-{% endblock %}
-{% block scripts %}
+
+<script>
+  gsap.from('#face-card', { opacity: 0, y: 30, duration: 0.9, ease: 'power3.out' });
+</script>
 <script src="{{ url_for('static', filename='js/face.js') }}"></script>
-{% endblock %}
+</body>
+</html>

@@ -15,7 +15,10 @@
   const methodSkipBtn = document.getElementById("signup-method-skip");
   const stepperDots = document.querySelectorAll(".stepper__dot");
 
-  const SAMPLES_TO_CAPTURE = 5;
+  // Mas muestras (y con algo mas de espaciado) le dan al usuario tiempo de
+  // moverse un poco entre frames, asi el rostro guardado no depende de un
+  // unico angulo/luz: mejora la consistencia de logins futuros del Modo A.
+  const SAMPLES_TO_CAPTURE = 8;
   const CAPTURE_GAP_MS = 350;
 
   let stream = null;

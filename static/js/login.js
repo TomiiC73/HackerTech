@@ -3,15 +3,9 @@
 //   Modo B -> FIDO2 / WebAuthn.
 (function () {
   const modeOptions = document.querySelectorAll(".mode-switch__option");
-  const modeDesc = document.getElementById("mode-desc");
   const form = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
   const submitBtn = document.getElementById("login-submit");
-
-  const DESCRIPTIONS = {
-    modo_a: "Primero tu contraseña; después escaneás tu rostro. La verificación facial es insegura a propósito (sin detección de vida).",
-    modo_b: "Primero tu contraseña; después confirmás con FIDO2 (Windows Hello, Touch ID o llave de seguridad).",
-  };
 
   let selectedMode = "modo_a";
 
@@ -20,7 +14,6 @@
     modeOptions.forEach((option) => {
       option.classList.toggle("active", option.dataset.mode === mode);
     });
-    modeDesc.textContent = DESCRIPTIONS[mode];
     errorBox.classList.remove("visible");
   }
 

@@ -1,28 +1,128 @@
-{% extends "base.html" %}
-{% block title %}FIDO2 — HackerBank{% endblock %}
-{% block content %}
-<div class="auth-shell">
-  <div class="auth-card auth-card--wide">
-    <div class="badge badge--center">Modo B &middot; FIDO2 / WebAuthn</div>
-    <div class="auth-card__title">Autenticación segura</div>
-    <div class="auth-card__subtitle">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIDO2 — HackerBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: { gold: { DEFAULT: '#c9a84c', light: '#e8d38a', dark: '#8f6f27' } },
+      },
+    },
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+  html, body { background: #050507; color: #f5f5f7; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+
+  .glow { position: absolute; border-radius: 9999px; filter: blur(110px); pointer-events: none; }
+
+  .grid-fade {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 30%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 30%, #000 40%, transparent 100%);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(95deg, #f3e3b4 0%, #c9a84c 45%, #8f6f27 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .status-line {
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: rgba(245,245,247,0.45);
+    margin-bottom: 1.1rem;
+    min-height: 1.1rem;
+    text-align: center;
+  }
+  .status-line.error { color: #ff9a9c; }
+  .status-line.success { color: #6ee7a8; }
+
+  .method-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.1rem 0.6rem;
+    border-radius: 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    color: rgba(245,245,247,0.55);
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease, color .2s ease;
+  }
+  .method-option:hover { border-color: rgba(201,168,76,0.5); }
+  .method-option.active {
+    border-color: #c9a84c;
+    background: rgba(201,168,76,0.08);
+    color: #f5f5f7;
+  }
+  .method-option.active .method-option__icon { color: #e8d38a; }
+  .method-option__icon svg { width: 26px; height: 26px; }
+  .method-option__name { font-size: 0.75rem; font-weight: 600; text-align: center; }
+</style>
+</head>
+<body class="antialiased min-h-screen">
+
+<a href="{{ url_for('landing') }}" class="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2.5 text-base font-bold tracking-[0.2em] uppercase">
+  <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16 2L29 9V23L16 30L3 23V9L16 2Z" stroke="#c9a84c" stroke-width="1.4"/>
+    <path d="M16 9L22 12.5V19.5L16 23L10 19.5V12.5L16 9Z" stroke="#f5f5f7" stroke-opacity="0.7" stroke-width="1.2"/>
+  </svg>
+  <span>Hacker<span class="text-gradient-gold">Bank</span></span>
+</a>
+
+<div class="relative min-h-screen flex items-center justify-center px-6 py-28 lg:py-16 overflow-hidden">
+  <div class="absolute inset-0 grid-fade"></div>
+  <div class="glow w-[520px] h-[520px] bg-gold/15 -top-40 -right-20"></div>
+  <div class="glow w-[420px] h-[420px] bg-gold/10 bottom-0 left-0"></div>
+
+  <div id="webauthn-card" class="relative glass rounded-3xl p-8 sm:p-10 w-full max-w-md mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs tracking-[0.2em] uppercase text-white/60 mb-6">
+      <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+      Modo B &middot; FIDO2 / WebAuthn
+    </div>
+
+    <div class="text-2xl font-bold mb-2">Autenticación segura</div>
+    <div class="text-white/45 text-sm leading-relaxed mb-8">
       La biometría se procesa localmente en tu equipo y nunca llega al servidor:
       solo viaja una firma criptográfica.
     </div>
 
     {% if has_credential %}
       {% if methods %}
-      <div class="method-configured">
-        Método configurado: <b>{{ methods | join(', ') }}</b>
+      <div class="text-sm text-white/60 mb-5">
+        Método configurado: <b class="text-white">{{ methods | join(', ') }}</b>
       </div>
       {% endif %}
       <div class="status-line" id="webauthn-status">Listo para autenticarte.</div>
-      <button class="btn btn--gold btn--full" id="webauthn-action" data-mode="auth">
+      <button class="w-full py-3.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors disabled:opacity-50"
+        id="webauthn-action" data-mode="auth">
         Autenticarme con FIDO2
       </button>
     {% else %}
-      <div class="method-label">Elegí cómo querés autenticarte</div>
-      <div class="method-grid" id="method-grid">
+      <div class="text-sm font-medium text-white/70 mb-4">Elegí cómo querés autenticarte</div>
+      <div class="grid grid-cols-3 gap-3 mb-5" id="method-grid">
         <button type="button" class="method-option active" data-method="huella">
           <span class="method-option__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/></svg>
@@ -42,22 +142,26 @@
           <span class="method-option__name">Clave de acceso</span>
         </button>
       </div>
-      <p class="method-note">
+      <p class="text-white/35 text-xs leading-relaxed mb-6">
         Tu dispositivo decide qué biometría usar (Windows Hello, Touch ID) según lo que
-        tengas configurado. La <b>clave de acceso</b> es una passkey que puede sincronizar
+        tengas configurado. La <b class="text-white/60">clave de acceso</b> es una passkey que puede sincronizar
         entre tus dispositivos.
       </p>
       <div class="status-line" id="webauthn-status">Elegí un método y registralo.</div>
-      <button class="btn btn--gold btn--full" id="webauthn-action" data-mode="register">
+      <button class="w-full py-3.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors disabled:opacity-50"
+        id="webauthn-action" data-mode="register">
         Registrar método
       </button>
     {% endif %}
   </div>
 </div>
-{% endblock %}
-{% block scripts %}
+
+<script>
+  gsap.from('#webauthn-card', { opacity: 0, y: 30, duration: 0.9, ease: 'power3.out' });
+</script>
 <script>
   window.HACKERBANK_HAS_CREDENTIAL = {{ 'true' if has_credential else 'false' }};
 </script>
 <script src="{{ url_for('static', filename='js/webauthn.js') }}"></script>
-{% endblock %}
+</body>
+</html>

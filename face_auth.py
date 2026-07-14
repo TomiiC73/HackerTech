@@ -33,6 +33,11 @@ _FACE_CASCADE = cv2.CascadeClassifier(
 )
 _ORB = cv2.ORB_create(nfeatures=500)
 _BF_MATCHER = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+# CLAHE (ecualizacion de histograma adaptativa por regiones) normaliza el
+# contraste local mucho mejor que un min-max global: le da a ORB puntos de
+# referencia mas estables entre una foto de alta y la camara en vivo, sin
+# tocar el umbral de matches ni agregar deteccion de vida.
+_CLAHE = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
 
 
 class IdentifyResult:
@@ -62,16 +67,26 @@ def _decode_base64_frame(frame_b64):
 def _normalize_lighting(face_crop):
     """Reduce la sensibilidad a diferencias de brillo/exposicion entre la
     muestra guardada (archivo) y la camara en vivo (auto-exposicion distinta).
+
+    CLAHE ecualiza el contraste en mosaicos locales (8x8) en vez de sobre
+    toda la imagen: una sombra parcial o una exposicion pareja pero distinta
+    ya no aplasta las texturas finas que ORB necesita para encontrar puntos
+    de interes, lo que hace que la MISMA cara matchee de forma mas estable
+    en logins futuros (el umbral de aceptacion no cambia).
     """
     blurred = cv2.GaussianBlur(face_crop, (3, 3), 0)
-    return cv2.normalize(blurred, None, 0, 255, cv2.NORM_MINMAX)
+    return _CLAHE.apply(blurred)
 
 
 def _detect_and_crop_face(image_bgr):
     """Detecta el rostro mas grande y devuelve el recorte normalizado en gris."""
     gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    # Ecualizar el histograma global antes de detectar ayuda al cascade Haar
+    # a encontrar la cara bajo condiciones de luz mas variadas (frames muy
+    # oscuros o muy quemados), sin cambiar como se compara la identidad.
+    gray_eq = cv2.equalizeHist(gray)
     faces = _FACE_CASCADE.detectMultiScale(
-        gray, scaleFactor=1.1, minNeighbors=5, minSize=(80, 80)
+        gray_eq, scaleFactor=1.1, minNeighbors=4, minSize=(80, 80)
     )
     if len(faces) == 0:
         return None

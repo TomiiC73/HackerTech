@@ -46,12 +46,12 @@ FACE_ORB_MIN_MATCHES = 150
 # Tamano al que se normalizan los rostros recortados antes de comparar.
 FACE_COMPARE_SIZE = (200, 200)
 
-# Modo A ahora funciona como identificacion 1:N: al escanear un rostro se
-# compara contra TODAS las muestras guardadas (de todos los usuarios) y se
-# loguea al mejor match que supere el umbral. Un usuario puede tener varias
-# muestras (distintos frames del alta), lo que mejora el reconocimiento.
-FACE_ENROLL_SAMPLES = 5          # cuantas muestras se intentan capturar al alta
-FACE_ENROLL_MIN_SAMPLES = 1      # minimo de muestras con rostro para crear la cuenta
+# Un usuario puede guardar varias muestras de rostro (distintos frames del
+# alta); en el login se compara contra todas las suyas y se toma el mejor
+# match. Mas muestras = template mas robusto ante variaciones de luz/angulo
+# en logins futuros, sin tocar el umbral ni la falta de liveness de arriba.
+FACE_ENROLL_SAMPLES = 8          # cuantos frames se intentan capturar al alta
+FACE_ENROLL_MIN_SAMPLES = 3      # minimo de muestras con rostro detectado para crear la cuenta
 
 # --- Generacion de cuentas nuevas (alta de usuario) ---
 BANK_ENTITY_NUMBER = "031"       # numero de entidad ficticio
