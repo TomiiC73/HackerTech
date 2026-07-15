@@ -144,29 +144,6 @@
   .status-line.error { color: #ff9a9c; }
   .status-line.success { color: #6ee7a8; }
 
-  /* --- Metodo FIDO2 --- */
-  .method-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 1.1rem 0.6rem;
-    border-radius: 1rem;
-    background: rgba(255,255,255,0.03);
-    border: 1.5px solid rgba(255,255,255,0.1);
-    color: rgba(245,245,247,0.55);
-    cursor: pointer;
-    transition: border-color .2s ease, background .2s ease, color .2s ease;
-  }
-  .method-option:hover { border-color: rgba(201,168,76,0.5); }
-  .method-option.active {
-    border-color: #c9a84c;
-    background: rgba(201,168,76,0.08);
-    color: #f5f5f7;
-  }
-  .method-option.active .method-option__icon { color: #e8d38a; }
-  .method-option__icon svg { width: 26px; height: 26px; }
-  .method-option__name { font-size: 0.75rem; font-weight: 600; text-align: center; }
 </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -186,12 +163,11 @@
 
   <div id="signup-card" class="relative glass rounded-3xl p-8 sm:p-10 w-full max-w-lg mx-auto">
     <div class="text-2xl font-bold mb-2">Crear tu cuenta</div>
-    <div class="text-white/45 text-sm mb-7">Abrí tu cuenta, registrá tu rostro y elegí cómo vas a autenticarte.</div>
+    <div class="text-white/45 text-sm mb-7">Abrí tu cuenta y registrá tu rostro para autenticarte a futuro.</div>
 
     <div class="stepper flex justify-center gap-8 mb-8" id="stepper">
       <span class="stepper__dot active" data-step="1">1<i class="ml-1">Datos</i></span>
       <span class="stepper__dot" data-step="2">2<i class="ml-1">Rostro</i></span>
-      <span class="stepper__dot" data-step="3">3<i class="ml-1">Seguridad</i></span>
     </div>
 
     <div class="form-error" id="signup-error"></div>
@@ -242,49 +218,6 @@
       </button>
     </div>
 
-    <!-- Paso 3: metodo de autenticacion futura (FIDO2, opcional) -->
-    <div id="signup-method" style="display:none;">
-      <p class="text-white/50 text-sm leading-relaxed mb-6 text-center">
-        ¡Cuenta creada! Elegí cómo querés autenticarte en el futuro con FIDO2
-        (opcional; siempre vas a poder entrar con tu rostro).
-      </p>
-
-      <div class="grid grid-cols-3 gap-3 mb-5" id="signup-method-grid">
-        <button type="button" class="method-option active" data-method="huella">
-          <span class="method-option__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/></svg>
-          </span>
-          <span class="method-option__name">Huella</span>
-        </button>
-        <button type="button" class="method-option" data-method="rostro">
-          <span class="method-option__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0"/></svg>
-          </span>
-          <span class="method-option__name">Rostro</span>
-        </button>
-        <button type="button" class="method-option" data-method="passkey">
-          <span class="method-option__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="10" r="4"/><path d="M11 12l7 7v2h-3l-1-1h-2v-2l-1-1"/></svg>
-          </span>
-          <span class="method-option__name">Clave de acceso</span>
-        </button>
-      </div>
-      <p class="text-white/35 text-xs leading-relaxed mb-6 text-center">
-        Tu dispositivo decide qué biometría usar (Windows Hello, Touch ID). La
-        <b class="text-white/60">clave de acceso</b> es una passkey que puede sincronizar entre dispositivos.
-      </p>
-
-      <div class="status-line" id="signup-method-status"></div>
-      <button type="button" id="signup-method-register"
-        class="w-full py-3.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors mb-3">
-        Registrar método FIDO2
-      </button>
-      <button type="button" id="signup-method-skip"
-        class="w-full py-3.5 rounded-full glass text-white/70 font-medium hover:text-white transition-colors">
-        Omitir por ahora
-      </button>
-    </div>
-
     <div class="text-center text-sm text-white/45 mt-7">
       ¿Ya tenés cuenta? <a href="{{ url_for('login_page') }}" class="text-gold font-medium hover:text-gold-light">Ingresá</a>
     </div>
@@ -294,7 +227,6 @@
 <script>
   gsap.from('#signup-card', { opacity: 0, y: 30, duration: 0.9, ease: 'power3.out' });
 </script>
-<script src="{{ url_for('static', filename='js/webauthn-register.js') }}"></script>
 <script src="{{ url_for('static', filename='js/signup.js') }}"></script>
 </body>
 </html>

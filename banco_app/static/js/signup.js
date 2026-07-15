@@ -1,30 +1,22 @@
-// Alta de cuenta: paso 1 (datos) -> paso 2 (rostro) -> paso 3 (metodo FIDO2, opcional).
+// Alta de cuenta: paso 1 (datos) -> paso 2 (rostro) -> dashboard.
 (function () {
   const form = document.getElementById("signup-form");
   const facePane = document.getElementById("signup-face");
-  const methodPane = document.getElementById("signup-method");
   const errorBox = document.getElementById("signup-error");
   const video = document.getElementById("signup-video");
   const canvas = document.getElementById("signup-canvas");
   const statusLine = document.getElementById("signup-status");
   const captureBtn = document.getElementById("signup-capture");
-
-  const methodGrid = document.getElementById("signup-method-grid");
-  const methodStatus = document.getElementById("signup-method-status");
-  const methodRegisterBtn = document.getElementById("signup-method-register");
-  const methodSkipBtn = document.getElementById("signup-method-skip");
   const stepperDots = document.querySelectorAll(".stepper__dot");
 
   // Mas muestras (y con algo mas de espaciado) le dan al usuario tiempo de
   // moverse un poco entre frames, asi el rostro guardado no depende de un
-  // unico angulo/luz: mejora la consistencia de logins futuros del Modo A.
+  // unico angulo/luz: mejora la consistencia de logins futuros.
   const SAMPLES_TO_CAPTURE = 8;
   const CAPTURE_GAP_MS = 350;
 
   let stream = null;
   let accountData = null;
-  let nextUrl = "/dashboard";
-  let selectedMethod = "huella";
 
   function showError(msg) {
     errorBox.textContent = msg;
@@ -36,7 +28,6 @@
     stepperDots.forEach((d) => d.classList.toggle("active", Number(d.dataset.step) <= n));
     form.style.display = n === 1 ? "" : "none";
     facePane.style.display = n === 2 ? "" : "none";
-    methodPane.style.display = n === 3 ? "" : "none";
   }
 
   // --- Paso 1: datos de la cuenta ---
@@ -117,44 +108,11 @@
         return;
       }
 
-      nextUrl = data.next || "/dashboard";
       if (stream) stream.getTracks().forEach((t) => t.stop());
-      goToStep(3);   // cuenta creada + logueado: ofrecer metodo FIDO2
+      window.location.href = data.next || "/dashboard";
     } catch (err) {
       showError("Error de conexión con el servidor.");
       captureBtn.disabled = false;
-    }
-  });
-
-  // --- Paso 3: metodo FIDO2 (opcional) ---
-  if (methodGrid) {
-    methodGrid.querySelectorAll(".method-option").forEach((opt) => {
-      opt.addEventListener("click", () => {
-        methodGrid.querySelectorAll(".method-option").forEach((o) => o.classList.remove("active"));
-        opt.classList.add("active");
-        selectedMethod = opt.dataset.method;
-      });
-    });
-  }
-
-  methodSkipBtn.addEventListener("click", () => { window.location.href = nextUrl; });
-
-  methodRegisterBtn.addEventListener("click", async () => {
-    methodRegisterBtn.disabled = true;
-    methodSkipBtn.disabled = true;
-    methodStatus.textContent = "Confirmá en tu dispositivo (Windows Hello / Touch ID)...";
-    methodStatus.className = "status-line";
-
-    const result = await window.registerWebAuthnMethod(selectedMethod);
-    if (result.ok) {
-      methodStatus.textContent = "¡Método registrado! Entrando...";
-      methodStatus.className = "status-line success";
-      setTimeout(() => { window.location.href = nextUrl; }, 700);
-    } else {
-      methodStatus.textContent = "No se pudo registrar: " + result.error + ". Podés omitir y usar tu rostro.";
-      methodStatus.className = "status-line error";
-      methodRegisterBtn.disabled = false;
-      methodSkipBtn.disabled = false;
     }
   });
 

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Mi portal — UTN Facultad Regional Córdoba{% endblock %}
+{% block content %}
+
+<section class="section">
+  <div class="section__inner">
+    <div class="section__eyebrow">Mi portal</div>
+    <h1 class="section__title">Hola, {{ user.full_name.split(' ')[0] }} 👋</h1>
+    <p class="section__text">
+      Ingresaste con
+      {% if auth_via == 'webauthn' %}tu passkey (FIDO2/WebAuthn passwordless).{% else %}usuario y contraseña.{% endif %}
+    </p>
+
+    <div class="portal-grid">
+      <div class="portal-card">
+        <div class="portal-card__title">Mis datos</div>
+        <div class="portal-card__row"><span>Nombre</span><span>{{ user.full_name }}</span></div>
+        <div class="portal-card__row"><span>DNI</span><span>{{ user.dni }}</span></div>
+        <div class="portal-card__row"><span>Email</span><span>{{ user.email }}</span></div>
+        <div class="portal-card__row"><span>Rol</span><span>{{ user.role }}</span></div>
+      </div>
+
+      <div class="portal-card">
+        <div class="portal-card__title">Acceso passwordless (Modo B)</div>
+        {% if has_passkey %}
+          <p class="portal-card__desc">Ya tenés una passkey registrada. La próxima vez podés ingresar sin contraseña.</p>
+        {% else %}
+          <p class="portal-card__desc">
+            Registrá una passkey para poder ingresar en el futuro sin
+            escribir tu contraseña, usando Windows Hello, Touch ID o una
+            llave de seguridad.
+          </p>
+          <div class="status-line" id="register-status"></div>
+          <button type="button" id="register-passkey-btn" class="btn btn--primary">Registrar passkey</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/webauthn-common.js') }}"></script>
+<script src="{{ url_for('static', filename='js/portal.js') }}"></script>
+{% endblock %}

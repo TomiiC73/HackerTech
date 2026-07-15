@@ -62,12 +62,6 @@ NEW_ACCOUNT_BALANCE_ARS = 25000.00
 NEW_ACCOUNT_BALANCE_USD = 0.00
 NEW_ACCOUNT_DAILY_YIELD_ARS = 0.00
 
-# --- Modo B: configuracion WebAuthn / FIDO2 ---
-# El RP ID debe ser un dominio (o "localhost") sin protocolo ni puerto.
-WEBAUTHN_RP_ID = os.environ.get("HACKERBANK_RP_ID", "localhost")
-WEBAUTHN_RP_NAME = "HackerBank"
-WEBAUTHN_ORIGIN = os.environ.get("HACKERBANK_ORIGIN", "http://localhost:5000")
-
 # --- Datos del usuario de laboratorio (Carlos Rodriguez) ---
 # La contrasena en texto plano SOLO existe aca para que el instructor
 # pueda re-generar el hash via seed.py; en la base de datos se guarda
@@ -105,9 +99,4 @@ PUBLIC_BRANCHES = [
 
 # --- Sesion ---
 SESSION_KEY_PRE_AUTH = "pre_auth_user_id"
-SESSION_KEY_AUTH_MODE = "auth_mode_chosen"
 SESSION_KEY_AUTHENTICATED = "authenticated"
-SESSION_KEY_AUTH_VIA = "authenticated_via"
-
-AUTH_MODE_FACE = "modo_a"
-AUTH_MODE_WEBAUTHN = "modo_b"

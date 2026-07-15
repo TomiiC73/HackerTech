@@ -1,10 +1,10 @@
 """
 HackerBank - Laboratorio de autenticacion facial (HackerTech UTN-FRC).
 
-Punto de entrada Flask. Define las rutas de las pantallas y las APIs
-de los dos modos de autenticacion. La logica de seguridad de cada modo
-vive en face_auth.py (Modo A, inseguro) y webauthn_auth.py (Modo B,
-FIDO2/WebAuthn).
+Punto de entrada Flask. Define las rutas de las pantallas y la API de
+autenticacion MFA: usuario/contrasena (primer factor) + rostro (segundo
+factor, INSEGURO a proposito). La logica de seguridad vive en
+face_auth.py.
 """
 import socket
 from functools import wraps
@@ -18,7 +18,6 @@ import db
 import face_auth
 import public_tunnel
 import rate_limit
-import webauthn_auth
 
 SERVER_PORT = 5000
 
@@ -69,21 +68,6 @@ def _current_user():
     return db.get_user_by_id(user_id) if user_id else None
 
 
-def _webauthn_ids():
-    """Deriva (rp_id, origin) del request real para WebAuthn.
-
-    WebAuthn ata cada credencial al origin exacto del navegador. Detras de
-    ngrok, Flask ve el request como http aunque el navegador este en https:
-    por eso se respeta X-Forwarded-Proto. Asi el Modo B funciona igual en
-    localhost o en el dominio publico de ngrok, sin hardcodear nada.
-    """
-    proto = request.headers.get("X-Forwarded-Proto", request.scheme)
-    host = request.host                 # incluye el puerto, ej "localhost:5000"
-    hostname = host.split(":")[0]       # rp_id NO lleva puerto
-    origin = f"{proto}://{host}"
-    return hostname, origin
-
-
 def _account_view(user):
     """Datos derivados de la cuenta para el dashboard (solo presentacion)."""
     cbu = user["cbu"]
@@ -97,12 +81,11 @@ def _account_view(user):
     }
 
 
-def _login_user(user_id, via):
+def _login_user(user_id):
     """Marca la sesion como autenticada para un usuario."""
     session.clear()
     session[config.SESSION_KEY_PRE_AUTH] = user_id
     session[config.SESSION_KEY_AUTHENTICATED] = True
-    session[config.SESSION_KEY_AUTH_VIA] = via
 
 
 # --------------------------------------------------------------------
@@ -140,24 +123,7 @@ def signup_page():
 @app.route("/face")
 @require_pre_auth
 def face_page():
-    # Modo A es un segundo factor: solo se llega aca tras validar la
-    # contrasena (primer factor) eligiendo el modo facial.
-    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_FACE:
-        return redirect(url_for("login_page"))
     return render_template("face_auth.html")
-
-
-@app.route("/webauthn")
-@require_pre_auth
-def webauthn_page():
-    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_WEBAUTHN:
-        return redirect(url_for("login_page"))
-    user = _current_user()
-    return render_template(
-        "webauthn_auth.html",
-        has_credential=webauthn_auth.has_registered_credential(user["id"]),
-        methods=db.get_webauthn_methods_for_user(user["id"]),
-    )
 
 
 @app.route("/dashboard")
@@ -172,13 +138,7 @@ def dashboard():
         cards=cards,
         movements=movements,
         account=_account_view(user),
-        fido2_methods=db.get_webauthn_methods_for_user(user["id"]),
     )
-
-
-@app.route("/compare")
-def compare():
-    return render_template("compare.html")
 
 
 @app.route("/logout")
@@ -224,21 +184,18 @@ def api_signup():
     for face_png in face_samples:
         db.insert_face(user_id, face_png)
 
-    _login_user(user_id, via=config.AUTH_MODE_FACE)
+    _login_user(user_id)
     return jsonify(ok=True, next=url_for("dashboard"), samples=len(face_samples))
 
 
 # --------------------------------------------------------------------
-# API: login Modo B (email + contrasena -> luego FIDO2)
+# API: login MFA - contrasena (1er factor) + rostro (2do factor)
 # --------------------------------------------------------------------
 @app.route("/api/login", methods=["POST"])
 def api_login():
     payload = request.get_json(silent=True) or {}
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password", "")
-    mode = payload.get("mode", config.AUTH_MODE_FACE)
-    if mode not in (config.AUTH_MODE_FACE, config.AUTH_MODE_WEBAUTHN):
-        return jsonify(ok=False, error="Modo de autenticación inválido."), 400
 
     # Proteccion de fuerza bruta: se limita por cuenta atacada (email).
     rate_key = f"login:{email}"
@@ -252,29 +209,23 @@ def api_login():
 
     rate_limit.reset(rate_key)
 
-    # Primer factor (contrasena) superado; falta el segundo factor biometrico
-    # segun el modo elegido. session.clear() regenera el contenido de sesion
-    # (mitiga fijacion de sesion).
+    # Primer factor (contrasena) superado; falta el segundo factor facial.
+    # session.clear() regenera el contenido de sesion (mitiga fijacion de sesion).
     session.clear()
     session[config.SESSION_KEY_PRE_AUTH] = user["id"]
-    session[config.SESSION_KEY_AUTH_MODE] = mode
 
-    next_url = url_for("face_page") if mode == config.AUTH_MODE_FACE else url_for("webauthn_page")
-    return jsonify(ok=True, next=next_url)
+    return jsonify(ok=True, next=url_for("face_page"))
 
 
 # --------------------------------------------------------------------
-# API: Modo A - segundo factor facial (INSEGURO: sin liveness).
+# API: segundo factor facial (INSEGURO: sin liveness detection).
 # Verificacion 1:1 contra los rostros del usuario ya identificado por
 # contrasena. Sigue siendo vulnerable a mostrar una foto de ese usuario:
-# esa es la debilidad pedagogica del Modo A, a proposito.
+# esa es la debilidad pedagogica del lab, a proposito.
 # --------------------------------------------------------------------
 @app.route("/api/face/verify", methods=["POST"])
 @require_pre_auth
 def api_face_verify():
-    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_FACE:
-        return jsonify(ok=False, error="Modo incorrecto."), 400
-
     payload = request.get_json(silent=True) or {}
     frame_b64 = payload.get("frame")
     if not frame_b64:
@@ -287,7 +238,6 @@ def api_face_verify():
     # Segundo factor superado: recien aca queda autenticado.
     if result.success:
         session[config.SESSION_KEY_AUTHENTICATED] = True
-        session[config.SESSION_KEY_AUTH_VIA] = config.AUTH_MODE_FACE
 
     return jsonify(
         ok=result.success,
@@ -295,71 +245,6 @@ def api_face_verify():
         reason=result.reason,
         next=url_for("dashboard") if result.success else None,
     )
-
-
-# --------------------------------------------------------------------
-# API: Modo B - WebAuthn / FIDO2
-# --------------------------------------------------------------------
-@app.route("/api/webauthn/register/begin", methods=["POST"])
-@require_pre_auth
-def api_webauthn_register_begin():
-    user = _current_user()
-    rp_id, _origin = _webauthn_ids()
-    payload = request.get_json(silent=True) or {}
-    method = payload.get("method", "huella")
-    # Se recuerda el metodo elegido para persistirlo al completar el registro
-    # (el body de /complete es la credencial cruda de WebAuthn, sin este dato).
-    session["webauthn_method"] = method
-    options_json = webauthn_auth.build_registration_options(user, rp_id, method)
-    return options_json, 200, {"Content-Type": "application/json"}
-
-
-@app.route("/api/webauthn/register/complete", methods=["POST"])
-@require_pre_auth
-def api_webauthn_register_complete():
-    user = _current_user()
-    rp_id, origin = _webauthn_ids()
-    method = session.get("webauthn_method", "huella")
-    credential_json = request.get_data(as_text=True)
-    try:
-        webauthn_auth.complete_registration(user, credential_json, rp_id, origin, method)
-    except Exception as error:
-        # No se filtra el detalle interno al cliente (CODING_STANDARDS): se loguea
-        # server-side para debugging y se responde un mensaje generico.
-        app.logger.warning("Registro FIDO2 fallido (user_id=%s): %s", user["id"], error)
-        return jsonify(ok=False, error="No se pudo completar el registro FIDO2."), 400
-    return jsonify(ok=True)
-
-
-@app.route("/api/webauthn/authenticate/begin", methods=["POST"])
-@require_pre_auth
-def api_webauthn_authenticate_begin():
-    user = _current_user()
-    rp_id, _origin = _webauthn_ids()
-    options_json = webauthn_auth.build_authentication_options(user, rp_id)
-    return options_json, 200, {"Content-Type": "application/json"}
-
-
-@app.route("/api/webauthn/authenticate/complete", methods=["POST"])
-@require_pre_auth
-def api_webauthn_authenticate_complete():
-    if session.get(config.SESSION_KEY_AUTH_MODE) != config.AUTH_MODE_WEBAUTHN:
-        return jsonify(ok=False, error="Modo incorrecto."), 400
-
-    user = _current_user()
-    rp_id, origin = _webauthn_ids()
-    credential_json = request.get_data(as_text=True)
-    try:
-        webauthn_auth.complete_authentication(user, credential_json, rp_id, origin)
-    except Exception as error:
-        # Firma invalida / credencial desconocida / sign_count sospechoso:
-        # se loguea el detalle y se responde generico (CODING_STANDARDS).
-        app.logger.warning("Autenticacion FIDO2 fallida (user_id=%s): %s", user["id"], error)
-        return jsonify(ok=False, error="No se pudo verificar tu credencial FIDO2."), 400
-
-    session[config.SESSION_KEY_AUTHENTICATED] = True
-    session[config.SESSION_KEY_AUTH_VIA] = config.AUTH_MODE_WEBAUTHN
-    return jsonify(ok=True, next=url_for("dashboard"))
 
 
 def _get_lan_ip():
@@ -381,9 +266,6 @@ def _expose_publicly_via_ngrok():
         print(f"HackerBank corriendo solo en local: http://localhost:{SERVER_PORT}")
         return
 
-    # rp_id/origin de WebAuthn ya no se fijan aca: se derivan del request
-    # real en cada peticion (ver _webauthn_ids), asi funcionan tanto en
-    # localhost como en el dominio de ngrok sin pisarse.
     lan_ip = _get_lan_ip()
 
     print("=" * 64)

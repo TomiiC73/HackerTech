@@ -841,72 +841,6 @@ img {
 /* ---------------- Badge centrado (auth) ---------------- */
 .badge--center { display: inline-flex; margin: 0 auto 20px; }
 
-/* ---------------- Selector de metodo FIDO2 ---------------- */
-.method-label {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-soft);
-  margin-bottom: 14px;
-}
-
-.method-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.method-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 10px;
-  background: var(--bg-white);
-  border: 1.5px solid var(--gray-line);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.1s ease;
-  font-family: var(--font-main);
-}
-
-.method-option:hover { border-color: var(--gold); }
-.method-option:active { transform: scale(0.98); }
-
-.method-option.active {
-  border-color: var(--gold);
-  background: rgba(169, 130, 47, 0.08);
-}
-
-.method-option__icon { color: var(--bg-navy); }
-.method-option__icon svg { width: 30px; height: 30px; }
-.method-option.active .method-option__icon { color: var(--gold); }
-
-.method-option__name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--bg-navy);
-  text-align: center;
-  line-height: 1.2;
-}
-
-.method-note {
-  font-size: 12.5px;
-  color: var(--text-soft);
-  line-height: 1.55;
-  margin-bottom: 18px;
-}
-
-.method-configured {
-  font-size: 14px;
-  color: var(--text-mid);
-  background: var(--bg-alt);
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-}
 
 /* ---------------- Stepper (alta de cuenta) ---------------- */
 .stepper {
@@ -1306,40 +1240,6 @@ img {
 .invest-card__value { font-size: 27px; font-weight: 700; margin-top: 10px; color: var(--bg-navy); }
 .invest-card__delta { font-size: 14px; color: var(--success); margin-top: 6px; font-weight: 600; }
 
-/* ---------------- Compare table ---------------- */
-.table-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.compare-table {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  margin-top: 30px;
-  background: var(--bg-white);
-}
-
-.compare-table th, .compare-table td {
-  padding: 18px 20px;
-  border: 1px solid var(--gray-line);
-  text-align: left;
-  font-size: 15.5px;
-  vertical-align: top;
-}
-
-.compare-table th {
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-soft);
-  background: var(--bg-alt);
-  font-weight: 600;
-}
-
-.compare-table td.col-a { color: var(--danger); }
-.compare-table td.col-b { color: var(--success); }
-
 /* ---------------- Footer ---------------- */
 .footer {
   border-top: 1px solid var(--gray-line);
@@ -1411,37 +1311,3 @@ img {
 
 .navbar__nav a.navbar__cta:hover { background: var(--bg-navy); color: var(--white); }
 
-/* ---------------- Info box (webauthn explanation) ---------------- */
-.info-box {
-  border: 1px solid var(--gray-line);
-  background: var(--bg-white);
-  padding: 26px 30px;
-  text-align: left;
-  margin-top: 34px;
-  max-width: 500px;
-}
-
-.info-box__title {
-  font-size: 13px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 12px;
-  font-weight: 700;
-}
-
-.info-box ul { list-style: none; }
-.info-box li {
-  font-size: 14.5px;
-  color: var(--text-mid);
-  line-height: 1.8;
-  padding-left: 18px;
-  position: relative;
-}
-
-.info-box li::before {
-  content: "—";
-  position: absolute;
-  left: 0;
-  color: var(--gold);
-}

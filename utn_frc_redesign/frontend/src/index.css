@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Dark mode por clase (".dark" en <html>), no por preferencia del SO:
+   así el toggle del NavBar tiene control real y persistente (ver App.jsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Paleta institucional: azul UTN profundo + acento cyan + coral para
+     estados de error, igual que el resto del proyecto (ver
+     ../templates/base.html) para que ambos frontends se sientan de la
+     misma familia visual. */
+  --color-navy-950: #060f1f;
+  --color-navy-900: #0b2f5c;
+  --color-navy-800: #0e3a70;
+  --color-navy-700: #114a8c;
+  --color-navy-600: #1868c7;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-coral-50: #fdf1f0;
+  --color-coral-400: #f4756b;
+  --color-coral-500: #ef5a4f;
+  --color-coral-600: #dc4237;
+
+  /* Grises "carbón" para el dark mode, mas calidos que el gray/slate
+     default de Tailwind. */
+  --color-carbon-950: #0a0b0d;
+  --color-carbon-900: #131417;
+  --color-carbon-800: #1c1e23;
+  --color-carbon-700: #26282f;
+  --color-carbon-600: #34363f;
+
+  --shadow-premium: 0 20px 60px -15px rgba(6, 15, 31, 0.25);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-carbon-950 dark:text-slate-100;
+}
+
+::selection {
+  @apply bg-cyan-500/30;
+}

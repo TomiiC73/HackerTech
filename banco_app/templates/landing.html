@@ -221,9 +221,10 @@
       </h1>
 
       <p id="hero-sub" class="mt-8 max-w-xl text-lg text-white/55 leading-relaxed">
-        Abrí tu cuenta en minutos, operá en pesos y dólares, y autenticate con tu
-        rostro o con un estándar FIDO2 real. Todo en un banco pensado para
-        enseñar cómo se rompe —y cómo se blinda— la seguridad bancaria.
+        Abrí tu cuenta en minutos, operá en pesos y dólares, y autenticate con
+        contraseña más verificación facial en dos pasos. Todo en un banco
+        pensado para enseñar cómo se rompe la seguridad biométrica sin
+        detección de vida.
       </p>
 
       <div id="hero-cta" class="mt-10 flex flex-wrap items-center gap-4">
@@ -796,7 +797,7 @@
         <div class="font-semibold mb-4">Recomendaciones para vos</div>
         <ul class="space-y-3 text-sm text-white/55 leading-relaxed">
           <li class="flex gap-3"><span class="text-gold">→</span>HackerBank nunca te va a pedir tu clave completa por teléfono, email o WhatsApp.</li>
-          <li class="flex gap-3"><span class="text-gold">→</span>Activá la verificación en dos pasos al ingresar (rostro o FIDO2).</li>
+          <li class="flex gap-3"><span class="text-gold">→</span>Activá la verificación en dos pasos al ingresar (contraseña + rostro).</li>
           <li class="flex gap-3"><span class="text-gold">→</span>Verificá siempre que la URL empiece con el dominio oficial antes de ingresar tus datos.</li>
           <li class="flex gap-3"><span class="text-gold">→</span>Ante cualquier consulta, contactanos solo por los canales oficiales listados abajo.</li>
         </ul>
@@ -858,7 +859,7 @@
           ¿Cómo funciona la verificación en dos pasos?
           <span class="faq-chevron text-gold text-xl leading-none transition-transform duration-300">+</span>
         </summary>
-        <div class="faq-answer"><div class="text-white/50 pb-5 leading-relaxed">Podés elegir entre verificación facial o un autenticador de plataforma compatible con el estándar FIDO2/WebAuthn, como Windows Hello o Touch ID.</div></div>
+        <div class="faq-answer"><div class="text-white/50 pb-5 leading-relaxed">Primero ingresás tu contraseña; luego te pedimos una verificación facial para confirmar que sos vos.</div></div>
       </details>
       <details class="faq-item glass rounded-2xl px-6 py-1">
         <summary class="flex items-center justify-between py-5 cursor-pointer select-none font-medium">
@@ -942,7 +943,6 @@
       <div class="flex flex-col gap-3 text-sm text-white/60">
         <a href="#ayuda" class="hover:text-white transition-colors">Preguntas frecuentes</a>
         <a href="#sucursales" class="hover:text-white transition-colors">Sucursales y cajeros</a>
-        <a href="{{ url_for('compare') }}" class="hover:text-white transition-colors">Cómo protegemos tu cuenta</a>
         <a href="#sucursales" class="hover:text-white transition-colors">Contacto</a>
       </div>
     </div>

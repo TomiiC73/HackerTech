@@ -1,27 +1,9 @@
-// Login: contraseña (1er factor) + segundo factor segun el modo elegido.
-//   Modo A -> verificacion facial (insegura, sin liveness) contra tu propia cara.
-//   Modo B -> FIDO2 / WebAuthn.
+// Login: contraseña (1er factor) + verificacion facial (2do factor,
+// insegura y sin liveness a proposito).
 (function () {
-  const modeOptions = document.querySelectorAll(".mode-switch__option");
   const form = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
   const submitBtn = document.getElementById("login-submit");
-
-  let selectedMode = "modo_a";
-
-  function selectMode(mode) {
-    selectedMode = mode;
-    modeOptions.forEach((option) => {
-      option.classList.toggle("active", option.dataset.mode === mode);
-    });
-    errorBox.classList.remove("visible");
-  }
-
-  modeOptions.forEach((option) => {
-    option.addEventListener("click", () => selectMode(option.dataset.mode));
-  });
-
-  selectMode("modo_a");
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -36,7 +18,7 @@
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, mode: selectedMode }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
 

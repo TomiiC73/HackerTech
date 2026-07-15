@@ -54,22 +54,6 @@
   .field input:focus { border-color: #c9a84c; background: rgba(255, 255, 255, 0.06); }
   .field label { display: block; font-size: 0.8rem; color: rgba(245,245,247,0.5); margin-bottom: 0.5rem; }
 
-  .mode-switch__option {
-    flex: 1;
-    text-align: center;
-    padding: 0.75rem 0.5rem;
-    border-radius: 0.85rem;
-    font-size: 0.85rem;
-    color: rgba(245,245,247,0.5);
-    cursor: pointer;
-    transition: background .2s ease, color .2s ease;
-  }
-  .mode-switch__option.active {
-    background: #c9a84c;
-    color: #050507;
-    font-weight: 600;
-  }
-
   .form-error {
     display: none;
     background: rgba(200, 38, 42, 0.1);
@@ -117,20 +101,15 @@
         Tu banco,<br><span class="text-gradient-gold">tu segundo factor.</span>
       </h1>
       <p class="text-white/50 text-lg leading-relaxed max-w-md">
-        Elegí cómo confirmar que sos vos: verificación facial o un estándar
-        FIDO2/WebAuthn real, donde tu biometría nunca sale de tu dispositivo.
+        Ingresá con tu contraseña y confirmá tu identidad con una
+        verificación facial en dos pasos.
       </p>
     </div>
 
     <!-- Panel derecho: formulario -->
     <div id="login-card" class="glass rounded-3xl p-8 sm:p-10 w-full max-w-md mx-auto lg:mx-0">
       <div class="text-2xl font-bold mb-2">Ingresar a tu cuenta</div>
-      <div class="text-white/45 text-sm mb-7">Ingresá con tu contraseña y elegí el segundo factor.</div>
-
-      <div class="mode-switch flex gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/8 mb-5">
-        <div class="mode-switch__option active" data-mode="modo_a">Con rostro</div>
-        <div class="mode-switch__option" data-mode="modo_b">Con FIDO2</div>
-      </div>
+      <div class="text-white/45 text-sm mb-7">Ingresá con tu contraseña; luego te pedimos verificación facial.</div>
 
       <div class="form-error" id="login-error"></div>
 

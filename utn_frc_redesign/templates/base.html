@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}UTN Facultad Regional Córdoba{% endblock %}</title>
+<meta name="description" content="Portal institucional de la UTN Facultad Regional Córdoba.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: {
+          navy: { 950: '#071224', 900: '#0b2f5c', 800: '#0e3a70', 700: '#114a8c' },
+          cyan: { 400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2' },
+          coral: { 50: '#fdf1f0', 400: '#f4756b', 500: '#ef5a4f', 600: '#dc4237' },
+        },
+        boxShadow: { soft: '0 8px 28px rgba(15, 35, 70, 0.10)' },
+      },
+    },
+  };
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="antialiased bg-slate-50 text-slate-900">
+
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-white focus:text-navy-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-soft">
+  Saltar al contenido principal
+</a>
+
+<header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center gap-8">
+    <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 font-extrabold shrink-0" aria-label="UTN Facultad Regional Córdoba, ir al inicio">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-navy-800 text-white text-xs tracking-wide">UTN</span>
+      <span class="text-[15px] text-navy-900 hidden xs:inline">Facultad Regional Córdoba</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600" aria-label="Navegación principal">
+      <a href="{{ url_for('index') }}#carreras" class="hover:text-navy-800 transition-colors">Carreras</a>
+      <a href="{{ url_for('index') }}#accesos" class="hover:text-navy-800 transition-colors">Alumnos</a>
+      <a href="{{ url_for('index') }}#accesos" class="hover:text-navy-800 transition-colors">Profesores</a>
+      <a href="{{ url_for('index') }}#bedelia" class="hover:text-navy-800 transition-colors">Bedelía</a>
+    </nav>
+    <div class="flex items-center gap-3 ml-auto">
+      {% if session.get('authenticated') %}
+        <a href="{{ url_for('portal') }}" class="text-sm font-semibold text-navy-800 hover:text-navy-900">Mi portal</a>
+        <a href="{{ url_for('logout') }}"
+           class="text-sm font-semibold px-4 py-2 rounded-full border border-slate-300 hover:border-navy-400 transition-colors">Salir</a>
+      {% else %}
+        <a href="{{ url_for('login_page') }}"
+           class="text-sm font-semibold px-4 py-2 rounded-full bg-navy-800 text-white hover:bg-navy-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+          Iniciar sesión
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-navy-950 text-slate-300">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="lg:col-span-2">
+      <div class="flex items-center gap-2.5 font-extrabold text-white mb-3">
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 text-xs tracking-wide">UTN</span>
+        <span>Facultad Regional Córdoba</span>
+      </div>
+      <p class="text-sm text-slate-400 max-w-sm leading-relaxed">Maestro M. López 675, Córdoba, Argentina.</p>
+    </div>
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Institucional</div>
+      <div class="flex flex-col gap-2 text-sm">
+        <a href="{{ url_for('index') }}#carreras" class="hover:text-white transition-colors">Carreras</a>
+        <a href="{{ url_for('index') }}#bedelia" class="hover:text-white transition-colors">Bedelía</a>
+      </div>
+    </div>
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Comunidad</div>
+      <div class="flex flex-col gap-2 text-sm">
+        <a href="{{ url_for('index') }}#accesos" class="hover:text-white transition-colors">Accesos rápidos</a>
+        <a href="{{ url_for('index') }}#noticias" class="hover:text-white transition-colors">Noticias</a>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-slate-500">
+    Proyecto de rediseño educativo — HackerTech UTN-FRC. No es un sitio oficial.
+  </div>
+</footer>
+</body>
+</html>

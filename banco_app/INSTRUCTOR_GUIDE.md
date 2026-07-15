@@ -8,23 +8,22 @@ cierre del laboratorio.
 
 ## 1. Descripción del objetivo y contexto pedagógico
 
-HackerBank simula un banco digital con dos flujos de login biométrico:
+HackerBank simula un banco digital con un login MFA de dos factores:
 
-- **Modo A**: autenticación facial construida a propósito de forma insegura
-  (sin liveness detection), para que el estudiante la vulnere mostrando una
-  foto a la cámara.
-- **Modo B**: autenticación FIDO2/WebAuthn real, usando el autenticador de
-  plataforma del equipo del estudiante (Windows Hello, Touch ID).
+- **Primer factor**: usuario y contraseña (estándar).
+- **Segundo factor**: autenticación facial construida a propósito de forma
+  insegura (sin liveness detection), para que el estudiante la vulnere
+  mostrando una foto a la cámara.
 
 El objetivo pedagógico es que el estudiante:
 
 1. Explote una falla real y común en sistemas de reconocimiento facial mal
    implementados (comparación estática, sin verificación de vida).
 2. Entienda **por qué** funciona el ataque a nivel técnico.
-3. Compare esa falla contra un estándar de la industria (FIDO2) que la
-   resuelve de raíz, y entienda el motivo arquitectónico de esa diferencia.
+3. Entienda que un segundo factor "biométrico" no aporta seguridad real si
+   es trivial de falsificar — el MFA completo cae igual que un solo factor.
 
-## 2. Solución paso a paso del ataque (Modo A)
+## 2. Solución paso a paso del ataque
 
 1. Levantar la aplicación (`python app.py`) y cargar los datos de laboratorio
    (`python seed.py`).
@@ -35,11 +34,11 @@ El objetivo pedagógico es que el estudiante:
    - Bien iluminada, sin sombras fuertes sobre la cara.
    - Con el rostro ocupando una porción significativa del encuadre
      (similar a una foto de documento).
-3. El estudiante abre `http://localhost:5000/login`, ingresa con
-   `carlos@hackerbank.com` / `hacker2024` y elige **Modo A**.
-4. En la pantalla de cámara, el estudiante debe mostrar **la misma foto**
-   (impresa en papel o en la pantalla de un celular/tablet) frente a la
-   webcam.
+3. El estudiante abre `http://localhost:5000/login` e ingresa con
+   `carlos@hackerbank.com` / `hacker2024` (primer factor).
+4. En la pantalla de cámara (segundo factor), el estudiante debe mostrar
+   **la misma foto** (impresa en papel o en la pantalla de un celular/tablet)
+   frente a la webcam.
    - **Distancia recomendada**: 20-40 cm de la cámara, de forma que el
      rostro de la foto llene buena parte del cuadro guía.
    - **Iluminación**: ambiente con luz uniforme, evitar reflejos sobre la
@@ -51,23 +50,14 @@ El objetivo pedagógico es que el estudiante:
 5. Mientras el rostro está encuadrado, el backend (varias veces por
    segundo, automáticamente):
    - Detecta el rostro en el frame capturado (Haar cascade).
-   - Lo compara contra el rostro detectado en `carlos_reference.jpg`
+   - Lo compara contra las muestras de rostro guardadas del usuario
      usando conteo de features ORB compatibles.
    - Si el conteo supera el umbral configurado (`FACE_ORB_MIN_MATCHES`
-     en `config.py`), la autenticación se acepta.
-6. Al lograrlo, el estudiante ve el dashboard completo con un banner
-   naranja/rojo explicando la vulnerabilidad y el **código del desafío**.
-
-### Dónde aparece el código del desafío
-
-El código vive como constante en [`config.py`](config.py) (`CHALLENGE_CODE`)
-y se inyecta en la plantilla [`templates/dashboard.html`](templates/dashboard.html)
-únicamente cuando `session['authenticated_via'] == 'modo_a'`
-(ver [`app.py`](app.py), ruta `/dashboard`).
-
-```
-HACKERTECH{FACE_SPOOF_NO_LIVENESS_2026}
-```
+     en `config.py`), el segundo factor se acepta.
+6. Al lograrlo, el estudiante entra directo al dashboard con los datos
+   completos de la cuenta (sin ningún banner ni aviso: el login "funcionó"
+   como si fuera legítimo, que es justamente el punto pedagógico — el
+   sistema no tiene forma de saber que fue una foto).
 
 ## 3. Explicación técnica de por qué funciona el ataque
 
@@ -77,7 +67,8 @@ verificación **sin liveness detection**:
 - Procesa **frames estáticos** de a uno (cada intento es independiente,
   sin memoria de intentos anteriores ni de movimiento entre frames).
 - Mide **similitud de apariencia 2D** (features ORB, comparaciones
-  locales de contraste) entre ese frame y la foto de referencia.
+  locales de contraste) entre ese frame y las muestras de rostro guardadas
+  del usuario.
 - No verifica ningún indicio de "vida": no pide parpadear, no mide
   movimiento entre frames, no usa profundidad (no hay cámara 3D/infrarroja
   disponible en una webcam estándar), no analiza textura de piel a nivel
@@ -86,6 +77,10 @@ verificación **sin liveness detection**:
 Como resultado, una foto de buena calidad reproduce la misma apariencia 2D
 que el original, y el algoritmo no tiene ninguna señal para distinguir
 "persona real frente a cámara" de "foto de esa persona frente a cámara".
+Tener contraseña como primer factor no cambia nada: el atacante solo
+necesita además una foto de la víctima, mucho más fácil de conseguir
+(redes sociales, LinkedIn, cámaras de seguridad) que robar un segundo
+factor criptográfico real.
 
 ## 4. Material teórico para el instructor
 
@@ -116,10 +111,11 @@ Variantes comunes:
   pixelado o artefactos de reimpresión/reproducción típicos de fotos o
   pantallas.
 
-### 4.2 Por qué FIDO2 resuelve esto de raíz
+### 4.2 Cómo se resuelve esto de raíz (estándares reales)
 
-FIDO2/WebAuthn no intenta "detectar mejor" si hay una persona real frente
-a la cámara: cambia el modelo de amenaza por completo.
+Los estándares de autenticación fuerte modernos (FIDO2/WebAuthn) no
+intentan "detectar mejor" si hay una persona real frente a la cámara:
+cambian el modelo de amenaza por completo.
 
 - El servidor nunca recibe datos biométricos, ni siquiera una imagen.
 - La biometría (huella, rostro, PIN) se usa **exclusivamente en el
@@ -130,23 +126,22 @@ a la cámara: cambia el modelo de amenaza por completo.
   específico; no se puede reutilizar ni replicar mostrando algo a una
   cámara.
 - Aunque un atacante consiga una foto perfecta del usuario, no tiene forma
-  de producir la firma criptográfica sin acceso físico al autenticador
-  (y sin superar su propio mecanismo de liveness/verificación local,
-  que además queda fuera del control del atacante remoto).
+  de producir la firma criptográfica sin acceso físico al autenticador.
 
-En otras palabras: el Modo A protege un secreto comparándolo contra una
-copia (vulnerable a falsificación de esa copia); el Modo B nunca transmite
-el secreto, solo prueba posesión de una clave mediante criptografía.
+En otras palabras: el segundo factor de HackerBank protege un secreto
+comparándolo contra una copia (vulnerable a falsificación de esa copia);
+un esquema FIDO2/WebAuthn nunca transmite el secreto, solo prueba posesión
+de una clave mediante criptografía.
 
-### 4.3 Comparación de vectores de ataque entre Modo A y Modo B
+### 4.3 Vectores de ataque contra este segundo factor
 
-| Vector de ataque | Modo A | Modo B |
-|---|---|---|
-| Mostrar una foto a la cámara | Funciona | No aplica (no usa cámara para autenticar) |
-| Robar la foto de referencia de la base de datos | Suficiente para vulnerar a cualquiera | Inútil: no hay biometría almacenada en el servidor |
-| Interceptar tráfico de red | Podría exponer el frame enviado | La firma capturada no sirve para otro challenge (es de un solo uso) |
-| Phishing (sitio falso) | El usuario podría "autenticarse" ante el atacante | El origin está atado a la firma (`expected_origin`); una credencial de `hackerbank.com` no es válida en un dominio distinto |
-| Replay de una respuesta capturada | Posible si se reenvía el mismo frame o uno similar | Imposible: cada challenge es aleatorio y de un solo uso |
+| Vector de ataque | Resultado |
+|---|---|
+| Mostrar una foto a la cámara | Funciona (es el desafío) |
+| Robar las muestras de rostro de la base de datos | Suficiente para vulnerar a ese usuario en cualquier estación |
+| Interceptar tráfico de red | Podría exponer el frame enviado (no está cifrado a nivel de aplicación, solo por HTTPS de transporte si lo hay) |
+| Phishing (sitio falso con contraseña + cámara falsa) | El atacante puede capturar contraseña y una foto/video en un solo paso |
+| Replay de un frame capturado | Posible si se reenvía el mismo frame o uno similar, porque no hay desafío aleatorio de un solo uso |
 
 ### 4.4 Preguntas sugeridas para el debate post-desafío
 
@@ -155,12 +150,12 @@ el secreto, solo prueba posesión de una clave mediante criptografía.
 2. Si un sistema de reconocimiento facial tuviera liveness activo (pedir
    parpadear), ¿qué tipo de ataque seguiría siendo posible? (pista: video
    con deepfake, ataques de replay con video pregrabado).
-3. ¿Por qué WebAuthn ata la firma al `origin` (dominio) que hizo la
-   petición? ¿Qué ataque previene específicamente eso?
-4. ¿Qué pasaría si un atacante compromete el dispositivo del usuario
-   (no el servidor) en un esquema FIDO2? ¿Sigue siendo seguro?
-5. ¿Qué balance existe entre UX (comodidad) y seguridad en cada uno de
-   los dos modos?
+3. ¿Por qué un esquema FIDO2/WebAuthn ata la firma al `origin` (dominio)
+   que hizo la petición? ¿Qué ataque previene específicamente eso?
+4. ¿Alcanza con "agregar un segundo factor" para tener MFA seguro, o
+   importa también qué tan falsificable es ese segundo factor?
+5. ¿Qué balance existe entre UX (comodidad) y seguridad al elegir un
+   segundo factor biométrico?
 
 ## 5. Rúbrica de evaluación sugerida
 
@@ -168,15 +163,13 @@ Puntaje total sugerido: **100 puntos**.
 
 | Sección | Qué debe incluir el informe | Puntos |
 |---|---|---|
-| Evidencia del ataque | Capturas de: foto de referencia usada, login en Modo A, momento del ataque frente a cámara, dashboard con banner y código del desafío | 30 |
-| Explicación técnica del ataque | Explicación propia (no copiada) de por qué la comparación estática sin liveness permite el spoofing | 25 |
-| Comparación con Modo B | Evidencia de haber probado el Modo B y explicación de por qué el mismo ataque no funciona ahí | 20 |
-| Propuesta de mitigación | Al menos una mejora concreta y técnicamente viable (ej. liveness activo, IR, mover a WebAuthn) con justificación | 15 |
-| Claridad y prolijidad del informe | Redacción clara, capturas legibles y bien referenciadas, código del desafío visible | 10 |
+| Evidencia del ataque | Capturas de: foto de referencia usada, login con contraseña, momento del ataque frente a cámara, dashboard ya autenticado | 35 |
+| Explicación técnica del ataque | Explicación propia (no copiada) de por qué la comparación estática sin liveness permite el spoofing | 30 |
+| Propuesta de mitigación | Al menos una mejora concreta y técnicamente viable (ej. liveness activo, IR, migrar a un estándar FIDO2/WebAuthn real) con justificación | 20 |
+| Claridad y prolijidad del informe | Redacción clara, capturas legibles y bien referenciadas | 15 |
 
-Criterios de corte sugeridos: un informe sin el código del desafío no
-puede recibir el puntaje de "Evidencia del ataque"; un informe sin
-explicación propia (solo capturas) no puede superar 50 puntos totales.
+Criterio de corte sugerido: un informe sin capturas del ataque completo
+(login + cámara + dashboard) no puede superar 50 puntos totales.
 
 ## 6. Notas de setup para el día del evento
 
@@ -185,10 +178,6 @@ explicación propia (solo capturas) no puede superar 50 puntos totales.
 - Una cámara web por estación (integrada de laptop alcanza).
 - Iluminación ambiente uniforme, sin contraluz fuerte detrás del
   estudiante (dificulta la detección de rostro tanto real como en foto).
-- Para el Modo B: un equipo con autenticador de plataforma habilitado
-  (Windows Hello configurado con PIN/huella/rostro, o Touch ID en Mac).
-  Si no hay autenticador de plataforma disponible, se puede usar una
-  llave de seguridad USB FIDO2 externa.
 
 ### Cómo preparar el entorno antes del HackerTech
 
@@ -202,27 +191,22 @@ explicación propia (solo capturas) no puede superar 50 puntos totales.
    archivo (o una impresión/foto de él) esté disponible para que los
    estudiantes lo usen contra la cámara.
 5. Ejecutar `python seed.py` una vez por estación para cargar los datos.
-6. Probar el flujo completo (Modo A y Modo B) en al menos una estación
-   antes de que lleguen los estudiantes.
-7. Confirmar que Windows Hello / Touch ID esté configurado en las
-   estaciones donde se vaya a probar el Modo B.
+6. Probar el flujo completo en al menos una estación antes de que lleguen
+   los estudiantes.
 
 ### Problemas comunes y cómo resolverlos en el momento
 
 | Problema | Causa probable | Solución rápida |
 |---|---|---|
-| "No se detecto ningun rostro" en Modo A | Poca luz, foto muy chica en el encuadre, ángulo torcido | Acercar la foto, mejorar iluminación, encuadrar de frente |
-| El ataque no pasa el umbral aunque se ve bien | La foto de referencia y la foto usada para el ataque no son la misma imagen/calidad | Usar exactamente la misma imagen que está en `carlos_reference.jpg` |
-| El Modo B no ofrece la opción de Windows Hello | El equipo no tiene un método biométrico/PIN configurado en Windows | Configurar un PIN de Windows Hello desde Configuración > Cuentas antes del evento |
-| Error de origin/rp_id en WebAuthn | Se accede por una IP o dominio distinto a `localhost` | Mantener siempre `http://localhost:5000`; si se necesita otro host, ajustar `HACKERBANK_RP_ID` y `HACKERBANK_ORIGIN` |
-| La cámara no se activa en el navegador | Permisos de cámara bloqueados o sitio servido sin contexto seguro | WebAuthn y `getUserMedia` requieren `localhost` o HTTPS; verificar permisos del navegador |
+| "No se detecto ningun rostro" | Poca luz, foto muy chica en el encuadre, ángulo torcido | Acercar la foto, mejorar iluminación, encuadrar de frente |
+| El ataque no pasa el umbral aunque se ve bien | La foto usada para el ataque no coincide con la que se usó para enrolar al usuario | Usar exactamente la misma imagen que está en `carlos_reference.jpg` |
+| La cámara no se activa en el navegador | Permisos de cámara bloqueados o sitio servido sin contexto seguro | `getUserMedia` requiere `localhost` o HTTPS; verificar permisos del navegador |
 
 ### Tiempo estimado por estudiante
 
 - Instalación y arranque (si no está preparado de antemano): 10-15 min.
 - Explorar la app y entender el objetivo: 5 min.
-- Ejecutar el ataque al Modo A (con foto de referencia ya provista): 5-10 min.
-- Probar el Modo B y comparar: 5-10 min.
+- Ejecutar el ataque (con foto de referencia ya provista): 5-10 min.
 - Redacción del informe: 20-30 min.
 
-**Total sugerido por estudiante: 45-70 minutos.**
+**Total sugerido por estudiante: 40-60 minutos.**

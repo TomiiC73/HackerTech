@@ -1,18 +1,18 @@
 """
-Modo A: autenticacion facial por identificacion 1:N.
+Segundo factor: verificacion facial (1:1, INSEGURA a proposito).
 
-Al escanear un rostro, se lo compara contra TODAS las muestras de rostro
-guardadas (de todos los usuarios) y se identifica/loguea al mejor match
-que supere el umbral. Cada usuario puede tener varias muestras (distintos
-frames tomados en el alta), lo que mejora el reconocimiento.
+Al escanear un rostro, se lo compara contra las muestras guardadas del
+usuario ya identificado por contrasena (primer factor) y se acepta si el
+mejor match supera el umbral. Cada usuario puede tener varias muestras
+(distintos frames tomados en el alta), lo que mejora el reconocimiento.
 
 ------------------------------------------------------------------
 Sigue SIN haber "liveness detection": se comparan frames estaticos 2D
 (features ORB). No se pide parpadear, ni se mide profundidad ni movimiento.
-Es una autenticacion biometrica debil a proposito -su contraparte robusta
-es el Modo B (WebAuthn/FIDO2, ver webauthn_auth.py)-, pero ahora funciona
-como un reconocimiento facial de verdad: cada persona enrola su propio
-rostro y luego se puede volver a autenticar con el.
+Es una autenticacion biometrica debil a proposito -mostrar una foto de la
+persona alcanza para superarla-, pero ahora funciona como un reconocimiento
+facial de verdad: cada persona enrola su propio rostro y luego se puede
+volver a autenticar con el.
 
 Nota de calibracion: la comparacion por histograma de intensidades crudas
 resultaba demasiado sensible a diferencias de brillo/exposicion entre la
@@ -73,13 +73,23 @@ def _normalize_lighting(face_crop):
     ya no aplasta las texturas finas que ORB necesita para encontrar puntos
     de interes, lo que hace que la MISMA cara matchee de forma mas estable
     en logins futuros (el umbral de aceptacion no cambia).
+
+    IMPORTANTE: esto se aplica en el MOMENTO DE COMPARAR (dentro de
+    _orb_good_matches), nunca antes de guardar una muestra. Si se "horneara"
+    en la imagen que se persiste, cualquier ajuste futuro a este algoritmo
+    dejaria incomparables (con score bajisimo) a todas las caras ya
+    enroladas contra un frame nuevo, sin ningun aviso ni error - un bug
+    silencioso real que ya paso una vez en este proyecto.
     """
     blurred = cv2.GaussianBlur(face_crop, (3, 3), 0)
     return _CLAHE.apply(blurred)
 
 
 def _detect_and_crop_face(image_bgr):
-    """Detecta el rostro mas grande y devuelve el recorte normalizado en gris."""
+    """Detecta el rostro mas grande y devuelve el recorte CRUDO en gris
+    (sin normalizar). La normalizacion se aplica recien al comparar, no aca:
+    ver la nota en _normalize_lighting.
+    """
     gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
     # Ecualizar el histograma global antes de detectar ayuda al cascade Haar
     # a encontrar la cara bajo condiciones de luz mas variadas (frames muy
@@ -92,14 +102,19 @@ def _detect_and_crop_face(image_bgr):
         return None
     x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
     face_crop = gray[y:y + h, x:x + w]
-    face_crop = cv2.resize(face_crop, config.FACE_COMPARE_SIZE)
-    return _normalize_lighting(face_crop)
+    return cv2.resize(face_crop, config.FACE_COMPARE_SIZE)
 
 
 def _orb_good_matches(face_a, face_b):
-    """Cuenta features ORB compatibles entre dos recortes de rostro."""
-    _, descriptors_a = _ORB.detectAndCompute(face_a, None)
-    _, descriptors_b = _ORB.detectAndCompute(face_b, None)
+    """Normaliza ambos recortes con el algoritmo ACTUAL y cuenta features
+    ORB compatibles entre ellos. Normalizar aca (no antes de guardar)
+    garantiza que una muestra guardada hace tiempo siga siendo comparable
+    aunque el algoritmo de normalizacion cambie despues.
+    """
+    norm_a = _normalize_lighting(face_a)
+    norm_b = _normalize_lighting(face_b)
+    _, descriptors_a = _ORB.detectAndCompute(norm_a, None)
+    _, descriptors_b = _ORB.detectAndCompute(norm_b, None)
     if descriptors_a is None or descriptors_b is None:
         return 0
     return len(_BF_MATCHER.match(descriptors_a, descriptors_b))
@@ -157,7 +172,7 @@ def enroll_from_image_path(image_path):
 
 
 def identify(frame_b64, enrolled_faces):
-    """Compara un frame contra TODAS las muestras guardadas (busqueda 1:N).
+    """Compara un frame contra las muestras guardadas de un usuario (1:1).
 
     `enrolled_faces` es una lista de (user_id, face_png). Devuelve un
     IdentifyResult con el user_id del mejor match si supera el umbral.

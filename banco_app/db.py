@@ -63,43 +63,8 @@ def init_db():
                 user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 face_data BLOB NOT NULL
             );
-
-            CREATE TABLE IF NOT EXISTS webauthn_credentials (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                credential_id BLOB UNIQUE NOT NULL,
-                public_key BLOB NOT NULL,
-                sign_count INTEGER NOT NULL DEFAULT 0,
-                method TEXT,
-                created_at TEXT,
-                last_used_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS webauthn_challenges (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                challenge BLOB NOT NULL,
-                purpose TEXT NOT NULL,
-                created_at TEXT
-            );
             """
         )
-        _migrate(conn)
-
-
-def _migrate(conn):
-    """Migraciones idempotentes para bases ya creadas antes de un cambio de schema."""
-    cred_cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_credentials)")]
-    if "method" not in cred_cols:
-        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN method TEXT")
-    if "created_at" not in cred_cols:
-        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN created_at TEXT")
-    if "last_used_at" not in cred_cols:
-        conn.execute("ALTER TABLE webauthn_credentials ADD COLUMN last_used_at TEXT")
-
-    chal_cols = [row["name"] for row in conn.execute("PRAGMA table_info(webauthn_challenges)")]
-    if "created_at" not in chal_cols:
-        conn.execute("ALTER TABLE webauthn_challenges ADD COLUMN created_at TEXT")
 
 
 def get_user_by_email(email):
@@ -195,17 +160,6 @@ def insert_face(user_id, face_data):
         )
 
 
-def get_all_faces():
-    """Devuelve todas las muestras de rostro de todos los usuarios.
-
-    Cada elemento es (user_id, face_data). Lo usa el Modo A para comparar
-    un frame de camara contra cada rostro guardado (busqueda 1:N).
-    """
-    with get_connection() as conn:
-        rows = conn.execute("SELECT user_id, face_data FROM faces").fetchall()
-        return [(row["user_id"], row["face_data"]) for row in rows]
-
-
 def count_faces_for_user(user_id):
     with get_connection() as conn:
         row = conn.execute(
@@ -221,87 +175,3 @@ def get_faces_for_user(user_id):
             "SELECT face_data FROM faces WHERE user_id = ?", (user_id,)
         ).fetchall()
         return [row["face_data"] for row in rows]
-
-
-def save_webauthn_credential(user_id, credential_id, public_key, sign_count, method=None):
-    with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO webauthn_credentials
-                (user_id, credential_id, public_key, sign_count, method, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
-            """,
-            (user_id, credential_id, public_key, sign_count, method),
-        )
-
-
-def get_webauthn_credentials_for_user(user_id):
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM webauthn_credentials WHERE user_id = ?", (user_id,)
-        ).fetchall()
-        return [dict(row) for row in rows]
-
-
-def get_webauthn_methods_for_user(user_id):
-    """Devuelve la lista de metodos FIDO2 configurados (labels legibles)."""
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT method FROM webauthn_credentials WHERE user_id = ? AND method IS NOT NULL",
-            (user_id,),
-        ).fetchall()
-        return [row["method"] for row in rows]
-
-
-def get_webauthn_credential_by_id(credential_id):
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM webauthn_credentials WHERE credential_id = ?", (credential_id,)
-        ).fetchone()
-        return dict(row) if row else None
-
-
-def update_webauthn_sign_count(credential_id, sign_count):
-    """Actualiza el contador anti-clonacion y marca el ultimo uso de la credencial."""
-    with get_connection() as conn:
-        conn.execute(
-            """
-            UPDATE webauthn_credentials
-            SET sign_count = ?, last_used_at = datetime('now')
-            WHERE credential_id = ?
-            """,
-            (sign_count, credential_id),
-        )
-
-
-def save_webauthn_challenge(user_id, challenge, purpose):
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM webauthn_challenges WHERE user_id = ? AND purpose = ?",
-            (user_id, purpose),
-        )
-        conn.execute(
-            """
-            INSERT INTO webauthn_challenges (user_id, challenge, purpose, created_at)
-            VALUES (?, ?, ?, datetime('now'))
-            """,
-            (user_id, challenge, purpose),
-        )
-
-
-def get_webauthn_challenge(user_id, purpose):
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM webauthn_challenges WHERE user_id = ? AND purpose = ?",
-            (user_id, purpose),
-        ).fetchone()
-        return dict(row) if row else None
-
-
-def delete_webauthn_challenge(user_id, purpose):
-    """Borra un challenge tras usarse: cada challenge es de un solo uso."""
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM webauthn_challenges WHERE user_id = ? AND purpose = ?",
-            (user_id, purpose),
-        )

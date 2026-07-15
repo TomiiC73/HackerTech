@@ -1,18 +1,24 @@
 """
-Publica HackerBank en internet via ngrok para que cualquiera pueda
-probar el desafio sin exponer manualmente el puerto local ni
-configurar port forwarding.
+Publica este laboratorio en internet via ngrok para que cualquiera pueda
+probarlo sin exponer manualmente el puerto local ni configurar port
+forwarding.
+
+Identico en logica a banco_app/public_tunnel.py (cada proyecto corre en su
+propio proceso de Python, asi que cada uno abre su PROPIO agente de ngrok
+en su PROPIO puerto -5001 aca, 5000 en banco_app-). No hay import
+compartido entre proyectos a proposito: son labs independientes.
 
 El authtoken de ngrok NUNCA se hardcodea en este repo (secreto). Se
 resuelve, en orden de prioridad, desde:
-  1. La variable de entorno HACKERBANK_NGROK_AUTHTOKEN (especifica de
-     ESTE laboratorio: usala si queres una cuenta/dominio de ngrok
-     distinto al de utn_frc_redesign).
-  2. La variable de entorno NGROK_AUTHTOKEN (compartida).
-  3. La configuracion de una instalacion de ngrok ya autenticada en
-     este equipo (por ejemplo la app de Microsoft Store), solo como
-     fallback de comodidad para desarrollo local.
-Si no se encuentra ninguno, el desafio sigue funcionando en modo
+  1. La variable de entorno UTNFRC_NGROK_AUTHTOKEN (especifica de ESTE
+     laboratorio: usala si queres una cuenta/dominio de ngrok distinto
+     al de banco_app).
+  2. La variable de entorno NGROK_AUTHTOKEN (compartida, mismo nombre que
+     usa banco_app).
+  3. La configuracion de una instalacion de ngrok ya autenticada en este
+     equipo (por ejemplo la app de Microsoft Store), solo como fallback
+     de comodidad para desarrollo local.
+Si no se encuentra ninguno, el laboratorio sigue funcionando en modo
 solo-local y se informa como resolverlo.
 
 ------------------------------------------------------------------
@@ -20,22 +26,27 @@ IMPORTANTE sobre "URL distinta por laboratorio" (comprobado en la practica):
 ------------------------------------------------------------------
 Con el MISMO authtoken/cuenta, el plan gratuito de ngrok asigna un
 hostname *.ngrok-free.dev persistente A NIVEL DE CUENTA, no uno nuevo por
-cada conexion. Si este proyecto y utn_frc_redesign/ usan el mismo
-NGROK_AUTHTOKEN, van a mostrar LA MISMA url publica cada vez que se
-ejecutan (aunque sea en procesos/puertos distintos), y si se ejecutan AL
-MISMO TIEMPO el segundo agente directamente falla al abrir su tunel
-(ERR_NGROK_334) hasta que el primero se cierre. Para una URL realmente
-distinta, seteá HACKERBANK_NGROK_AUTHTOKEN con el token de una SEGUNDA
-cuenta de ngrok dedicada a este laboratorio (y opcionalmente
-HACKERBANK_NGROK_DOMAIN si esa cuenta tiene un dominio propio reservado).
+cada conexion. Eso significa que banco_app y este proyecto, si usan el
+mismo NGROK_AUTHTOKEN, van a terminar mostrando LA MISMA url publica cada
+vez que se ejecutan (aunque sea en procesos/puertos distintos), y si se
+ejecutan AL MISMO TIEMPO el segundo agente directamente falla al abrir su
+tunel (ERR_NGROK_334, "endpoint ya esta online") hasta que el primero se
+cierre.
+
+Para que este laboratorio tenga una URL realmente distinta a la de
+banco_app, seteá UTNFRC_NGROK_AUTHTOKEN con el token de una SEGUNDA cuenta
+de ngrok (gratis) dedicada a este proyecto. Sin esa variable, este modulo
+cae al mismo NGROK_AUTHTOKEN que banco_app y comparte su limitacion.
+Opcionalmente tambien podes fijar UTNFRC_NGROK_DOMAIN si tu cuenta de
+ngrok tiene un dominio propio reservado.
 """
 import os
 from pathlib import Path
 
 from pyngrok import ngrok
 
-_AUTHTOKEN_ENV_VARS = ["HACKERBANK_NGROK_AUTHTOKEN", "NGROK_AUTHTOKEN"]
-_DOMAIN_ENV_VAR = "HACKERBANK_NGROK_DOMAIN"
+_AUTHTOKEN_ENV_VARS = ["UTNFRC_NGROK_AUTHTOKEN", "NGROK_AUTHTOKEN"]
+_DOMAIN_ENV_VAR = "UTNFRC_NGROK_DOMAIN"
 
 # Ubicaciones conocidas de configs de ngrok ya autenticadas en Windows.
 # Son rutas fijas del sistema operativo, no contienen ningun secreto
@@ -81,8 +92,8 @@ def open_tunnel(port):
     """Abre un tunel HTTPS publico hacia el puerto local dado.
 
     Devuelve la URL publica (str) si se pudo abrir, o None si ngrok
-    no esta disponible/autenticado (el servidor sigue funcionando en
-    modo solo-local en ese caso).
+    no esta disponible/autenticado/ya tiene otra sesion abierta (el
+    servidor sigue funcionando en modo solo-local en ese caso).
     """
     authtoken = _discover_authtoken()
     if not authtoken:
