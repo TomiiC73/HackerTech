@@ -24,6 +24,7 @@ export default function SignupStepper() {
   const [error, setError] = useState("");
   const [enrolling, setEnrolling] = useState(false);
   const [legajo, setLegajo] = useState(null);
+  const [domain, setDomain] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function SignupStepper() {
       return;
     }
     setLegajo(result.legajo);
+    setDomain(result.domain);
     setStep(3);
   }
 
@@ -123,7 +125,7 @@ export default function SignupStepper() {
             {step === 2 && (
               <SignupStep2Enroll enrolling={enrolling} onEnroll={handleEnroll} onBack={backToStep1} />
             )}
-            {step === 3 && <SignupStep3Success legajo={legajo} />}
+            {step === 3 && <SignupStep3Success legajo={legajo} domain={domain} />}
           </AnimatePresence>
         </div>
       </div>

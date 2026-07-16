@@ -44,13 +44,28 @@ DOMAIN_OPTIONS = [
 ]
 DEFAULT_DOMAIN = "frc"
 
+# --- Dominio asignado segun la carrera elegida en el alta (igual que el
+# esquema real de la facultad: cada especialidad tiene su propio dominio de
+# correo). Civil no tiene un dominio propio en DOMAIN_OPTIONS, asi que cae
+# en DEFAULT_DOMAIN ("frc").
+CAREER_DOMAIN_MAP = {
+    "Ingeniería Civil": "frc",
+    "Ingeniería en Energía Eléctrica": "electrica",
+    "Ingeniería Electrónica": "electronica",
+    "Ingeniería Industrial": "industrial",
+    "Ingeniería Mecánica": "mecanica",
+    "Ingeniería Metalúrgica": "metalurgica",
+    "Ingeniería Química": "quimica",
+    "Ingeniería en Sistemas de Información": "sistemas",
+}
+
 # --- Usuario de demo (para probar el login) ---
 DEMO_USER_LEGAJO = "45231"
 DEMO_USER_DOMAIN = "frc"
 DEMO_USER_EMAIL = "ana.torres@frc.utn.edu.ar"
 DEMO_USER_PASSWORD = "utn2026"
 DEMO_USER_NAME = "Ana Torres"
-DEMO_USER_DNI = "35.412.678"
+DEMO_USER_DNI = "35412678"
 DEMO_USER_ROLE = "Alumna — Ingeniería en Sistemas de Información"
 
 # --- Contenido de la home (simula el contenido publico de la facultad) ---

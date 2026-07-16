@@ -62,11 +62,11 @@ export default function SignupStep1Form({ form, onFieldChange, careers, careersL
           onChange={(e) => onFieldChange("career", e.target.value)}
           className={`${FIELD_BASE} bg-white dark:bg-carbon-900 disabled:opacity-60`}
         >
-          <option value="" disabled>
+          <option value="" disabled className="text-slate-900">
             {careersLoading ? "Cargando carreras..." : "Elegí una carrera"}
           </option>
           {careers.map((c) => (
-            <option key={c.name} value={c.name}>{c.name}</option>
+            <option key={c.name} value={c.name} className="text-slate-900">{c.name}</option>
           ))}
         </select>
         {!careersLoading && careers.length === 0 && (

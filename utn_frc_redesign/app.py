@@ -11,6 +11,7 @@ webauthn_auth.py.
 """
 import base64
 import random
+import re
 import secrets
 import socket
 from functools import wraps
@@ -242,7 +243,7 @@ def api_login():
 def api_signup_start():
     payload = request.get_json(silent=True) or {}
     full_name = (payload.get("full_name") or "").strip()
-    dni = (payload.get("dni") or "").strip()
+    dni = re.sub(r"\D", "", payload.get("dni") or "")  # solo digitos, sin puntos
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password") or ""
     career = (payload.get("career") or "").strip()
@@ -260,6 +261,12 @@ def api_signup_start():
     temp_user = {"id": secrets.randbelow(2**31), "email": email, "full_name": full_name}
     options = webauthn_auth.build_registration_options(temp_user, rp_id)
 
+    # El dominio del "@" queda atado a la carrera elegida (igual que el
+    # esquema real de la facultad: cada especialidad tiene su propio
+    # dominio de correo) - se resuelve una sola vez aca y viaja en el
+    # staging para que register/complete no tenga que recalcularlo.
+    domain = config.CAREER_DOMAIN_MAP.get(career, config.DEFAULT_DOMAIN)
+
     session.clear()
     session[config.SESSION_KEY_WEBAUTHN_CHALLENGE] = base64.b64encode(options.challenge).decode("ascii")
     session[config.SESSION_KEY_PENDING_SIGNUP] = {
@@ -268,6 +275,7 @@ def api_signup_start():
         "email": email,
         "password_hash": generate_password_hash(password),
         "career": career,
+        "domain": domain,
     }
     return _options_json(options)
 
@@ -282,10 +290,11 @@ def api_signup_register_complete():
     rp_id, origin = _webauthn_ids()
     credential_json = request.get_data(as_text=True)
 
-    legajo = _generate_unique_legajo(config.DEFAULT_DOMAIN)
+    domain = pending["domain"]
+    legajo = _generate_unique_legajo(domain)
     user_id = db.insert_user(
         legajo=legajo,
-        domain=config.DEFAULT_DOMAIN,
+        domain=domain,
         email=pending["email"],
         password_hash=pending["password_hash"],
         full_name=pending["full_name"],
@@ -307,7 +316,7 @@ def api_signup_register_complete():
     # Cuenta y credencial ya validas: se loguea directo (segundo factor
     # recien enrolado, no haria falta volver a pedirlo en el momento).
     _login_user(user_id, via=config.AUTH_VIA_WEBAUTHN)
-    return jsonify(ok=True, legajo=legajo, domain=config.DEFAULT_DOMAIN)
+    return jsonify(ok=True, legajo=legajo, domain=domain)
 
 
 # --------------------------------------------------------------------

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 // Puramente presentacional: solo muestra el legajo que ya se genero y
 // confirmo del lado del servidor (ver app.py `_generate_unique_legajo`).
 // No genera ni valida nada por su cuenta.
-export default function SignupStep3Success({ legajo }) {
+export default function SignupStep3Success({ legajo, domain }) {
   return (
     <motion.div
       key="step3"
@@ -29,7 +29,7 @@ export default function SignupStep3Success({ legajo }) {
       <div className="rounded-2xl bg-navy-900 text-white p-6 mb-8">
         <div className="text-[11px] uppercase tracking-wider text-cyan-300 font-bold mb-1">Tu número de legajo asignado es</div>
         <div className="text-3xl font-extrabold tracking-wide">{legajo}</div>
-        <div className="text-xs text-slate-300 mt-1">@frc</div>
+        <div className="text-xs text-slate-300 mt-1">@{domain}</div>
       </div>
       <a
         href="/portal"

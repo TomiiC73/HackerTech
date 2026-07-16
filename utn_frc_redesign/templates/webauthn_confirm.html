@@ -12,17 +12,10 @@
     </p>
 
     <button type="button" id="webauthn-confirm-btn"
-            class="w-full flex items-center justify-center gap-4 px-5 py-6 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+            class="w-full flex flex-col items-center justify-center gap-1 px-5 py-6 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
             aria-describedby="webauthn-status">
-      <span class="shrink-0 w-12 h-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
-          <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/>
-        </svg>
-      </span>
-      <span class="text-left">
-        <span class="block font-bold text-navy-900">Confirmar con Rostro / Huella</span>
-        <span class="block text-xs text-slate-500 mt-0.5">FIDO2/WebAuthn</span>
-      </span>
+      <span class="block font-bold text-navy-900">Confirmar con Rostro / Huella</span>
+      <span class="block text-xs text-slate-500">FIDO2/WebAuthn</span>
     </button>
 
     <div class="status-line mt-5" id="webauthn-status" role="status" aria-live="polite"></div>

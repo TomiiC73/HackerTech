@@ -50,7 +50,7 @@ function IdentityFields({ values, onChange, invalid, domainOptions, defaultDomai
             className={`${FIELD_BASE} ${invalid ? FIELD_ERROR : FIELD_OK}`}
           >
             {(domainOptions.length ? domainOptions : [defaultDomain]).map((opt) => (
-              <option key={opt} value={opt}>
+              <option key={opt} value={opt} className="text-slate-900">
                 {opt}
               </option>
             ))}
@@ -203,17 +203,10 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
             disabled={confirming}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center gap-4 px-5 py-5 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+            className="w-full flex flex-col items-center justify-center gap-1 px-5 py-5 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
           >
-            <span className="shrink-0 w-12 h-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6" />
-              </svg>
-            </span>
-            <span className="text-left">
-              <span className="block font-bold text-navy-900 dark:text-white">Confirmar con Rostro / Huella</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">FIDO2/WebAuthn</span>
-            </span>
+            <span className="block font-bold text-navy-900 dark:text-white">Confirmar con Rostro / Huella</span>
+            <span className="block text-xs text-slate-500 dark:text-slate-400">FIDO2/WebAuthn</span>
           </motion.button>
           <div
             role="status"
