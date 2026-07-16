@@ -28,8 +28,8 @@ a { color: inherit; text-decoration: none; }
 ul { margin: 0; padding: 0; }
 
 /* ---------------- Botones ---------------- */
-/* base.html/index.html/login.html usan Tailwind directamente; este .btn
-   solo lo sigue usando portal.html para el boton de registrar passkey. */
+/* base.html usa Tailwind directamente; este .btn solo lo sigue usando
+   portal.html para el boton de registrar passkey. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -59,13 +59,6 @@ ul { margin: 0; padding: 0; }
 }
 .section__title { font-size: 30px; font-weight: 800; margin: 0 0 36px; color: var(--blue-900); }
 .section__text { font-size: 16px; color: var(--text-soft); line-height: 1.6; max-width: 640px; }
-
-/* ---------------- Login: pestañas ARIA (login.html + login.js) ---------------- */
-.login-tabs__option {
-  color: var(--text-soft);
-  background: none;
-}
-.login-tabs__option.active { background: var(--white); color: var(--blue-900); box-shadow: 0 1px 4px rgba(15,35,70,0.1); }
 
 .status-line {
   font-size: 13px;

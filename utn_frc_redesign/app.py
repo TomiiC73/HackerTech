@@ -14,9 +14,10 @@ import random
 import secrets
 import socket
 from functools import wraps
+from pathlib import Path
 
 import webauthn
-from flask import Flask, render_template, request, session, jsonify, redirect, url_for
+from flask import Flask, render_template, request, session, jsonify, redirect, send_from_directory, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import config
@@ -25,6 +26,12 @@ import public_tunnel
 import webauthn_auth
 
 SERVER_PORT = 5001
+
+# El home y el login viejos (Jinja) fueron reemplazados por completo por el
+# SPA de React en frontend/dist (ver frontend/src/App.jsx) - "/" y "/signup"
+# sirven ese build ya compilado (`npm run build`), no un template server-side.
+# Solo /portal y /webauthn siguen siendo Jinja (ver mas abajo).
+FRONTEND_DIST = Path(__file__).parent / "frontend" / "dist"
 
 app = Flask(__name__)
 app.config.update(
@@ -41,7 +48,9 @@ def require_authenticated(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not session.get(config.SESSION_KEY_AUTHENTICATED):
-            return redirect(url_for("login_page"))
+            # No hay pagina de login separada: el LoginCard vive embebido en
+            # el home de React, en el ancla #login.
+            return redirect(url_for("index") + "#login")
         return view(*args, **kwargs)
     return wrapped
 
@@ -52,7 +61,7 @@ def require_pre_auth(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not session.get(config.SESSION_KEY_PRE_AUTH):
-            return redirect(url_for("login_page"))
+            return redirect(url_for("index") + "#login")
         return view(*args, **kwargs)
     return wrapped
 
@@ -113,19 +122,34 @@ def _generate_unique_legajo(domain):
 # --------------------------------------------------------------------
 # Paginas
 # --------------------------------------------------------------------
+# El login ya no tiene una pagina propia: vive embebido como LoginCard en
+# el home de React (ancla #login), asi que "/signup" es la unica otra ruta
+# que necesita servir el mismo index.html del SPA (React decide que mostrar
+# mirando window.location.pathname, ver App.jsx). Cada una necesita su
+# PROPIO nombre de endpoint - registrar las dos rutas bajo un mismo
+# endpoint hace que url_for("index") quede ambiguo entre "/" y "/signup".
+def _serve_spa():
+    return send_from_directory(FRONTEND_DIST, "index.html")
+
+
 @app.route("/")
 def index():
-    return render_template(
-        "index.html",
-        news_items=config.NEWS_ITEMS,
-        quick_access_items=config.QUICK_ACCESS_ITEMS,
-        careers=config.CAREERS,
-    )
+    return _serve_spa()
 
 
-@app.route("/login")
-def login_page():
-    return render_template("login.html", domain_options=config.DOMAIN_OPTIONS, default_domain=config.DEFAULT_DOMAIN)
+@app.route("/signup")
+def signup_page():
+    return _serve_spa()
+
+
+@app.route("/assets/<path:filename>")
+def spa_assets(filename):
+    return send_from_directory(FRONTEND_DIST / "assets", filename)
+
+
+@app.route("/favicon.svg")
+def favicon():
+    return send_from_directory(FRONTEND_DIST, "favicon.svg")
 
 
 # --------------------------------------------------------------------
