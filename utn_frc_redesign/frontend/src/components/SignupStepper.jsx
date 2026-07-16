@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { enrollSignup, getHome } from "../api";
+import { signup, getHome } from "../api";
 import UtnLogo from "./UtnLogo";
 import Toast from "./Toast";
 import StepperHeader from "./signup/StepperHeader";
 import SignupStep1Form from "./signup/SignupStep1Form";
-import SignupStep2Enroll from "./signup/SignupStep2Enroll";
 import SignupStep3Success from "./signup/SignupStep3Success";
 
 const EMPTY_FORM = { first_name: "", last_name: "", dni: "", email: "", password: "", career: "" };
 
 // Orquestador del wizard: es el UNICO lugar que conoce el estado del
-// formulario, el paso actual y el resultado del enrolamiento FIDO2. Los
-// tres pasos (SignupStep1Form/2Enroll/3Success) son componentes "tontos"
-// que solo reciben props y disparan callbacks - la logica de negocio
-// (validacion, cuando avanzar de paso, que hacer si FIDO2 falla) vive
-// toda aca, no repartida entre componentes de UI.
+// formulario y el paso actual. SignupStep1Form/3Success son componentes
+// "tontos" que solo reciben props y disparan callbacks - la logica de
+// negocio (validacion, cuando avanzar de paso) vive toda aca. Sin FIDO2:
+// la cuenta se crea directo con los datos del paso 1, una passkey es algo
+// que se registra despues, ya logueado, desde "Mi portal".
 export default function SignupStepper() {
   const [careers, setCareers] = useState([]);
   const [careersLoading, setCareersLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState("");
-  const [enrolling, setEnrolling] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [legajo, setLegajo] = useState(null);
   const [domain, setDomain] = useState(null);
   const [toast, setToast] = useState(null);
@@ -38,7 +37,7 @@ export default function SignupStepper() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleStep1Submit(event) {
+  async function handleStep1Submit(event) {
     event.preventDefault();
     setError("");
     if (!form.first_name || !form.last_name || !form.dni || !form.email || !form.password || !form.career) {
@@ -49,41 +48,26 @@ export default function SignupStepper() {
       setError("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
-    setStep(2);
-  }
 
-  async function handleEnroll() {
-    setError("");
+    setSubmitting(true);
     setToast(null);
-    setEnrolling(true);
-    const result = await enrollSignup({
+    const result = await signup({
       full_name: `${form.first_name} ${form.last_name}`.trim(),
       dni: form.dni,
       email: form.email,
       password: form.password,
       career: form.career,
     });
-    setEnrolling(false);
+    setSubmitting(false);
 
     if (!result.ok) {
-      // `result.error` ya viene traducido a espanol por webauthnErrors.js
-      // cuando la falla es del navegador/dispositivo (cancelo el prompt,
-      // sin soporte FIDO2, etc.) - ver api.js. Un toast elegante ademas del
-      // mensaje inline, con salida rapida a "Volver" para no dejar al
-      // aspirante trabado si su dispositivo no puede completar FIDO2.
-      setError(result.error || "No se pudo completar el enrolamiento.");
-      setToast({ id: Date.now(), tone: "error", message: result.error || "No se pudo completar el enrolamiento." });
+      setError(result.error || "No se pudo crear la cuenta.");
+      setToast({ id: Date.now(), tone: "error", message: result.error || "No se pudo crear la cuenta." });
       return;
     }
     setLegajo(result.legajo);
     setDomain(result.domain);
-    setStep(3);
-  }
-
-  function backToStep1() {
-    setToast(null);
-    setError("");
-    setStep(1);
+    setStep(2);
   }
 
   return (
@@ -119,20 +103,18 @@ export default function SignupStepper() {
                 onFieldChange={updateField}
                 careers={careers}
                 careersLoading={careersLoading}
+                submitting={submitting}
                 onSubmit={handleStep1Submit}
               />
             )}
-            {step === 2 && (
-              <SignupStep2Enroll enrolling={enrolling} onEnroll={handleEnroll} onBack={backToStep1} />
-            )}
-            {step === 3 && <SignupStep3Success legajo={legajo} domain={domain} />}
+            {step === 2 && <SignupStep3Success legajo={legajo} domain={domain} />}
           </AnimatePresence>
         </div>
       </div>
       {/* Fuera del card: su backdrop-blur-2xl + overflow-hidden crea un
           containing block para position:fixed y ademas recortaria el
           toast si quedara anidado adentro. */}
-      <Toast toast={toast} onClose={() => setToast(null)} onAction={backToStep1} actionLabel="Volver" />
+      <Toast toast={toast} onClose={() => setToast(null)} onAction={() => setToast(null)} actionLabel="Cerrar" />
     </section>
   );
 }

@@ -126,30 +126,13 @@ export async function confirmWithPasskey() {
   }
 }
 
-// Alta de aspirantes, paso 2: arranca el enrolamiento FIDO2 obligatorio con
-// los datos ya cargados en el paso 1 (staging server-side, ver
-// app.py /api/signup/start) y completa la ceremonia WebAuthn de punta a
-// punta. Devuelve { ok, legajo, domain } o { ok: false, error }.
-export async function enrollSignup(signupData) {
-  if (!window.PublicKeyCredential) return unsupportedResult();
-
-  try {
-    const optionsJson = await postJson("/api/signup/start", signupData);
-    if (optionsJson.ok === false) {
-      return { ok: false, error: optionsJson.error };
-    }
-    const publicKey = decodeCreationOptions(optionsJson);
-
-    const credential = await navigator.credentials.create({ publicKey });
-    if (!credential) return unsupportedResult();
-
-    const result = await postJson("/api/signup/register/complete", buildAttestationCredentialJson(credential));
-    return result.ok
-      ? { ok: true, legajo: result.legajo, domain: result.domain }
-      : { ok: false, error: result.error };
-  } catch (err) {
-    return { ok: false, error: translateWebAuthnError(err), recoverable: true, cause: err };
-  }
+// Alta de aspirantes: solo datos + carrera, sin FIDO2 - la cuenta queda
+// lista para entrar con legajo+contraseña apenas responde el backend.
+// Registrar una passkey es un paso opcional posterior (ver
+// registerPasskey() mas abajo, usado desde "Mi portal").
+// Devuelve { ok, legajo, domain } o { ok: false, error }.
+export function signup(signupData) {
+  return postJson("/api/signup", signupData);
 }
 
 // Registrar una passkey nueva (requiere estar logueado ya). No la usa el

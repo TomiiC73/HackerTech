@@ -2,16 +2,15 @@ import { motion } from "framer-motion";
 
 const STEPS = [
   { n: 1, label: "Datos y carrera" },
-  { n: 2, label: "Enrolamiento FIDO2" },
-  { n: 3, label: "Legajo asignado" },
+  { n: 2, label: "Legajo asignado" },
 ];
 
 // Puramente presentacional: solo sabe dibujar el progreso dado el paso
-// actual, no conoce formularios ni FIDO2. Reutilizable si el wizard alguna
-// vez suma o reordena pasos.
+// actual, no conoce formularios. Reutilizable si el wizard alguna vez suma
+// o reordena pasos.
 export default function StepperHeader({ current }) {
   return (
-    <div className="flex items-center justify-center gap-3 mb-10" aria-label={`Paso ${current} de 3`}>
+    <div className="flex items-center justify-center gap-3 mb-10" aria-label={`Paso ${current} de ${STEPS.length}`}>
       {STEPS.map((s, i) => (
         <div key={s.n} className="flex items-center gap-3">
           <div className="flex flex-col items-center gap-1.5">

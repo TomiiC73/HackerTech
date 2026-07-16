@@ -21,6 +21,7 @@ El challenge se guarda en la sesion de Flask (cookie firmada) entre el
 """
 import webauthn
 from webauthn.helpers.structs import (
+    AuthenticatorAttachment,
     AuthenticatorSelectionCriteria,
     ResidentKeyRequirement,
     UserVerificationRequirement,
@@ -30,7 +31,15 @@ from webauthn.helpers.structs import (
 import config
 import db
 
+# authenticator_attachment=PLATFORM: le pide al navegador un autenticador
+# de plataforma (Windows Hello, Touch ID), nunca una llave externa. Es el
+# SO el que decide ahi si pide huella, PIN o rostro segun lo que el
+# dispositivo tenga configurado - la app solo pide "autenticador de
+# plataforma", nunca implementa su propia biometria (ver portal.html: las
+# 3 opciones de la UI son solo para guiar al usuario, las tres disparan
+# este mismo registro).
 _AUTHENTICATOR_SELECTION = AuthenticatorSelectionCriteria(
+    authenticator_attachment=AuthenticatorAttachment.PLATFORM,
     resident_key=ResidentKeyRequirement.DISCOURAGED,
     user_verification=UserVerificationRequirement.REQUIRED,
 )

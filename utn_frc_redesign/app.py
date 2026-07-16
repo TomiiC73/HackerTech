@@ -12,7 +12,6 @@ webauthn_auth.py.
 import base64
 import random
 import re
-import secrets
 import socket
 from functools import wraps
 from pathlib import Path
@@ -224,23 +223,13 @@ def api_login():
 
 
 # --------------------------------------------------------------------
-# API: alta de aspirantes (stepper de 3 pasos en el frontend).
-#
-# Paso 1 (datos + carrera): se validan y quedan en STAGING en la sesion
-# (session[SESSION_KEY_PENDING_SIGNUP]) - la cuenta todavia NO se crea en
-# la base. Se devuelven opciones de registro FIDO2 para un "usuario"
-# temporal (id aleatorio, no persistido).
-#
-# Paso 2 (enrolamiento FIDO2 obligatorio): recien cuando la ceremonia
-# WebAuthn se completa con exito se genera el legajo y se inserta la fila
-# real en `users`, y ahi si se guarda la credencial contra su id real. Si
-# la ceremonia falla, no queda ninguna cuenta a medio crear (rollback):
-# una cuenta sin credencial asociada seria inutilizable, porque este
-# login exige FIDO2 en cuanto detecta una credencial - y sin ella, exigir
-# fallaria en un estado raro. Mas simple: sin FIDO2 exitoso, no hay alta.
+# API: alta de aspirantes. Solo datos + carrera - sin FIDO2: la cuenta
+# se crea directo con legajo autogenerado y contraseña, y el usuario
+# entra con eso. Registrar una passkey es opcional y se hace despues,
+# ya logueado, desde "Mi portal" (ver /api/webauthn/register/*).
 # --------------------------------------------------------------------
-@app.route("/api/signup/start", methods=["POST"])
-def api_signup_start():
+@app.route("/api/signup", methods=["POST"])
+def api_signup():
     payload = request.get_json(silent=True) or {}
     full_name = (payload.get("full_name") or "").strip()
     dni = re.sub(r"\D", "", payload.get("dni") or "")  # solo digitos, sin puntos
@@ -255,67 +244,22 @@ def api_signup_start():
     if db.email_exists(email):
         return jsonify(ok=False, error="Ya existe una cuenta con ese email."), 409
 
-    rp_id, _origin = _webauthn_ids()
-    # id puramente temporal para la ceremonia WebAuthn: no se persiste, y
-    # complete_registration() usa el id REAL (recien creado) mas adelante.
-    temp_user = {"id": secrets.randbelow(2**31), "email": email, "full_name": full_name}
-    options = webauthn_auth.build_registration_options(temp_user, rp_id)
-
     # El dominio del "@" queda atado a la carrera elegida (igual que el
     # esquema real de la facultad: cada especialidad tiene su propio
-    # dominio de correo) - se resuelve una sola vez aca y viaja en el
-    # staging para que register/complete no tenga que recalcularlo.
+    # dominio de correo).
     domain = config.CAREER_DOMAIN_MAP.get(career, config.DEFAULT_DOMAIN)
-
-    session.clear()
-    session[config.SESSION_KEY_WEBAUTHN_CHALLENGE] = base64.b64encode(options.challenge).decode("ascii")
-    session[config.SESSION_KEY_PENDING_SIGNUP] = {
-        "full_name": full_name,
-        "dni": dni,
-        "email": email,
-        "password_hash": generate_password_hash(password),
-        "career": career,
-        "domain": domain,
-    }
-    return _options_json(options)
-
-
-@app.route("/api/signup/register/complete", methods=["POST"])
-def api_signup_register_complete():
-    pending = session.get(config.SESSION_KEY_PENDING_SIGNUP)
-    challenge_b64 = session.get(config.SESSION_KEY_WEBAUTHN_CHALLENGE)
-    if not pending or not challenge_b64:
-        return jsonify(ok=False, error="No hay una alta pendiente."), 400
-
-    rp_id, origin = _webauthn_ids()
-    credential_json = request.get_data(as_text=True)
-
-    domain = pending["domain"]
     legajo = _generate_unique_legajo(domain)
     user_id = db.insert_user(
         legajo=legajo,
         domain=domain,
-        email=pending["email"],
-        password_hash=pending["password_hash"],
-        full_name=pending["full_name"],
-        dni=pending["dni"],
-        role=f"Alumno — {pending['career']}",
+        email=email,
+        password_hash=generate_password_hash(password),
+        full_name=full_name,
+        dni=dni,
+        role=f"Alumno — {career}",
     )
 
-    try:
-        expected_challenge = base64.b64decode(challenge_b64)
-        webauthn_auth.complete_registration({"id": user_id}, credential_json, expected_challenge, rp_id, origin)
-    except Exception as error:
-        db.delete_user(user_id)  # sin credencial, la cuenta no queda utilizable: se revierte
-        app.logger.warning("Enrolamiento de alta fallido: %s", error)
-        return jsonify(ok=False, error="No se pudo completar el enrolamiento biométrico."), 400
-
-    session.pop(config.SESSION_KEY_PENDING_SIGNUP, None)
-    session.pop(config.SESSION_KEY_WEBAUTHN_CHALLENGE, None)
-
-    # Cuenta y credencial ya validas: se loguea directo (segundo factor
-    # recien enrolado, no haria falta volver a pedirlo en el momento).
-    _login_user(user_id, via=config.AUTH_VIA_WEBAUTHN)
+    _login_user(user_id, via=config.AUTH_VIA_PASSWORD)
     return jsonify(ok=True, legajo=legajo, domain=domain)
 
 

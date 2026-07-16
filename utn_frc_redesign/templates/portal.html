@@ -21,17 +21,52 @@
       </div>
 
       <div class="portal-card">
-        <div class="portal-card__title">Acceso passwordless (Modo B)</div>
+        <div class="portal-card__title">Reforzar seguridad</div>
         {% if has_passkey %}
-          <p class="portal-card__desc">Ya tenés una passkey registrada. La próxima vez podés ingresar sin contraseña.</p>
+          <p class="portal-card__desc">Ya tenés una passkey registrada. La próxima vez que inicies sesión te vamos a pedir que la confirmes.</p>
         {% else %}
           <p class="portal-card__desc">
-            Registrá una passkey para poder ingresar en el futuro sin
-            escribir tu contraseña, usando Windows Hello, Touch ID o una
-            llave de seguridad.
+            Activá un acceso passwordless con el autenticador de tu
+            dispositivo (Windows Hello, Touch ID). Elegí el método que uses
+            habitualmente — el sistema operativo va a pedirte exactamente
+            eso, o lo que tengas configurado, cuando confirmes.
+          </p>
+          <div class="flex flex-col gap-2.5 mb-4" id="passkey-methods" role="group" aria-label="Método de verificación">
+            <button type="button" data-method="huella"
+                    class="passkey-method-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors text-left disabled:opacity-50 disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+              <span class="w-9 h-9 rounded-lg bg-cyan-500 text-white flex items-center justify-center shrink-0" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6"/>
+                </svg>
+              </span>
+              <span class="text-sm font-bold text-navy-900">Huella dactilar</span>
+            </button>
+            <button type="button" data-method="pin"
+                    class="passkey-method-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors text-left disabled:opacity-50 disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+              <span class="w-9 h-9 rounded-lg bg-cyan-500 text-white flex items-center justify-center shrink-0" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>
+                </svg>
+              </span>
+              <span class="text-sm font-bold text-navy-900">PIN de Windows Hello</span>
+            </button>
+            <button type="button" data-method="rostro"
+                    class="passkey-method-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors text-left disabled:opacity-50 disabled:cursor-default focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+              <span class="w-9 h-9 rounded-lg bg-cyan-500 text-white flex items-center justify-center shrink-0" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"/>
+                  <circle cx="12" cy="12" r="3.2"/>
+                </svg>
+              </span>
+              <span class="text-sm font-bold text-navy-900">Reconocimiento facial</span>
+            </button>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">
+            Las tres opciones activan el mismo registro FIDO2/WebAuthn: es tu
+            sistema operativo, no esta página, el que efectivamente verifica
+            tu identidad.
           </p>
           <div class="status-line" id="register-status"></div>
-          <button type="button" id="register-passkey-btn" class="btn btn--primary">Registrar passkey</button>
         {% endif %}
       </div>
     </div>

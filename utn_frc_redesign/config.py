@@ -27,7 +27,6 @@ SESSION_KEY_AUTHENTICATED = "authenticated"
 SESSION_KEY_USER_ID = "user_id"
 SESSION_KEY_AUTH_VIA = "authenticated_via"
 SESSION_KEY_WEBAUTHN_CHALLENGE = "webauthn_challenge"
-SESSION_KEY_PENDING_SIGNUP = "pending_signup"  # datos de alta en staging hasta que el enrolamiento FIDO2 termine
 
 # --- Alta de aspirantes: generacion de legajo ---
 LEGAJO_PREFIX = "50"

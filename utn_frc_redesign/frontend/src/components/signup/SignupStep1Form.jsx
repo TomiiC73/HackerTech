@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import Spinner from "../Spinner";
 
 const FIELD_BASE =
   "w-full px-4 py-3 rounded-xl border bg-white/70 dark:bg-white/[0.06] backdrop-blur-sm outline-none transition-colors text-[15px] text-slate-900 dark:text-white placeholder:text-slate-400 border-slate-200 dark:border-white/15 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
@@ -10,9 +11,9 @@ const cardVariants = {
 };
 
 // Puramente presentacional: solo junta datos + carrera y delega el envio.
-// No sabe nada de FIDO2, legajos ni de los otros pasos - eso es
-// responsabilidad de SignupStepper (el orquestador) y de SignupStep2Enroll.
-export default function SignupStep1Form({ form, onFieldChange, careers, careersLoading, onSubmit }) {
+// No sabe nada de legajos ni de la pantalla de exito - eso es
+// responsabilidad de SignupStepper (el orquestador).
+export default function SignupStep1Form({ form, onFieldChange, careers, careersLoading, submitting, onSubmit }) {
   return (
     <motion.form
       key="step1"
@@ -77,11 +78,12 @@ export default function SignupStep1Form({ form, onFieldChange, careers, careersL
       </div>
       <motion.button
         type="submit"
+        disabled={submitting}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full py-3.5 rounded-full bg-navy-900 text-white font-semibold transition-colors hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+        className="w-full flex items-center justify-center py-3.5 rounded-full bg-navy-900 text-white font-semibold transition-colors hover:bg-navy-800 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
       >
-        Continuar
+        {submitting ? <Spinner label="Creando cuenta..." /> : "Continuar"}
       </motion.button>
     </motion.form>
   );
