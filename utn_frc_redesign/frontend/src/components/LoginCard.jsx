@@ -1,20 +1,28 @@
 import { useState } from "react";
-import { confirmWithPasskey, login, loginMfa } from "../api";
+import { AnimatePresence, motion } from "framer-motion";
+import { confirmWithPasskey, login } from "../api";
+import Spinner from "./Spinner";
+
+const stepVariants = {
+  enter: { opacity: 0, x: 16 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -16 },
+};
 
 const FIELD_BASE =
   "w-full px-4 py-3 rounded-xl border bg-white/70 dark:bg-white/[0.06] backdrop-blur-sm outline-none transition-colors text-[15px] text-slate-900 dark:text-white placeholder:text-slate-400";
 const FIELD_OK = "border-slate-200 dark:border-white/15 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30";
 const FIELD_ERROR = "border-coral-400 ring-2 ring-coral-400/30";
 
-function IdentityFields({ idPrefix, values, onChange, invalid, domainOptions, defaultDomain }) {
+function IdentityFields({ values, onChange, invalid, domainOptions, defaultDomain }) {
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor={`${idPrefix}-legajo`} className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+        <label htmlFor="legajo" className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
           Legajo
         </label>
         <input
-          id={`${idPrefix}-legajo`}
+          id="legajo"
           type="text"
           inputMode="numeric"
           autoComplete="username"
@@ -30,11 +38,11 @@ function IdentityFields({ idPrefix, values, onChange, invalid, domainOptions, de
           @
         </span>
         <div className="flex-1">
-          <label htmlFor={`${idPrefix}-domain`} className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+          <label htmlFor="domain" className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
             Dominio
           </label>
           <select
-            id={`${idPrefix}-domain`}
+            id="domain"
             required
             value={values.domain}
             onChange={(e) => onChange({ ...values, domain: e.target.value })}
@@ -49,11 +57,11 @@ function IdentityFields({ idPrefix, values, onChange, invalid, domainOptions, de
         </div>
       </div>
       <div>
-        <label htmlFor={`${idPrefix}-password`} className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+        <label htmlFor="password" className="block text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
           Contraseña
         </label>
         <input
-          id={`${idPrefix}-password`}
+          id="password"
           type="password"
           autoComplete="current-password"
           required
@@ -70,50 +78,34 @@ function IdentityFields({ idPrefix, values, onChange, invalid, domainOptions, de
 const EMPTY_FORM = { legajo: "", domain: "", password: "" };
 
 export default function LoginCard({ domainOptions = [], defaultDomain = "frc" }) {
-  const [tab, setTab] = useState("password"); // "password" | "mfa"
-  const [formA, setFormA] = useState({ ...EMPTY_FORM, domain: defaultDomain });
-  const [formB, setFormB] = useState({ ...EMPTY_FORM, domain: defaultDomain });
-  const [errorA, setErrorA] = useState("");
-  const [errorB, setErrorB] = useState("");
-  const [loadingA, setLoadingA] = useState(false);
-  const [loadingB, setLoadingB] = useState(false);
-  const [mfaStep, setMfaStep] = useState("identify"); // "identify" | "confirm"
+  const [step, setStep] = useState("identify"); // "identify" | "confirm"
+  const [form, setForm] = useState({ ...EMPTY_FORM, domain: defaultDomain });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState({ text: "", tone: "idle" });
   const [confirming, setConfirming] = useState(false);
 
-  async function handleSubmitA(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setErrorA("");
-    setLoadingA(true);
+    setError("");
+    setLoading(true);
     try {
-      const result = await login(formA);
+      const result = await login(form);
       if (!result.ok) {
-        setErrorA(result.error || "No se pudo iniciar sesión.");
+        setError(result.error || "No se pudo iniciar sesión.");
         return;
       }
-      window.location.href = result.next;
-    } catch {
-      setErrorA("Error de conexión con el servidor.");
-    } finally {
-      setLoadingA(false);
-    }
-  }
-
-  async function handleSubmitB(event) {
-    event.preventDefault();
-    setErrorB("");
-    setLoadingB(true);
-    try {
-      const result = await loginMfa(formB);
-      if (!result.ok) {
-        setErrorB(result.error || "No se pudo iniciar sesión.");
-        return;
+      if (result.next === "/webauthn") {
+        // Ya tiene una passkey registrada: falta confirmarla (segundo factor).
+        setStep("confirm");
+      } else {
+        // Primer ingreso sin passkey todavia: la contraseña ya alcanzo.
+        window.location.href = result.next;
       }
-      setMfaStep("confirm");
     } catch {
-      setErrorB("Error de conexión con el servidor.");
+      setError("Error de conexión con el servidor.");
     } finally {
-      setLoadingB(false);
+      setLoading(false);
     }
   }
 
@@ -138,62 +130,43 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
       <div className="text-xs font-bold uppercase tracking-[0.15em] text-cyan-600 dark:text-cyan-400 mb-2">Portal UTN-FRC</div>
       <h2 className="text-2xl font-extrabold text-navy-900 dark:text-white mb-7">Iniciar sesión</h2>
 
-      <div className="flex gap-1.5 p-1.5 rounded-2xl bg-slate-900/5 dark:bg-white/5 mb-7" role="tablist" aria-label="Método de inicio de sesión">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "password"}
-          onClick={() => setTab("password")}
-          className={`flex-1 text-center px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === "password"
-              ? "bg-white dark:bg-carbon-800 text-navy-900 dark:text-white shadow-sm"
-              : "text-slate-500 dark:text-slate-400 hover:text-navy-700 dark:hover:text-white"
-          }`}
-        >
-          Modo A · Tradicional
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "mfa"}
-          onClick={() => setTab("mfa")}
-          className={`flex-1 text-center px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === "mfa"
-              ? "bg-white dark:bg-carbon-800 text-navy-900 dark:text-white shadow-sm"
-              : "text-slate-500 dark:text-slate-400 hover:text-navy-700 dark:hover:text-white"
-          }`}
-        >
-          Modo B · Biométrico
-        </button>
-      </div>
-
-      {tab === "password" && (
-        <div role="tabpanel">
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5">
-            Ingresá con tu legajo y contraseña institucional.
-          </p>
-
-          {errorA && (
+      {/* Sin mode="wait": evita depender de que la animacion de salida
+          termine (requestAnimationFrame) para montar el paso siguiente -
+          si la pestaña pierde foco a mitad de transicion esa espera puede
+          no completarse nunca. El contenido nuevo se monta apenas cambia
+          el estado; el fade es solo cosmetico. */}
+      <AnimatePresence>
+      {step === "identify" && (
+        <motion.div key="identify" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+          {error && (
             <div role="alert" className="rounded-xl bg-coral-50 dark:bg-coral-500/10 border border-coral-400/30 text-coral-600 dark:text-coral-300 text-sm px-4 py-3 mb-4">
-              {errorA}
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmitA} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <IdentityFields
-              idPrefix="a"
-              values={formA}
-              onChange={setFormA}
-              invalid={Boolean(errorA)}
+              values={form}
+              onChange={setForm}
+              invalid={Boolean(error)}
               domainOptions={domainOptions}
               defaultDomain={defaultDomain}
             />
             <button
               type="submit"
-              disabled={loadingA}
-              className="w-full py-3.5 rounded-full bg-navy-900 text-white font-semibold transition-all hover:scale-[1.02] hover:bg-navy-800 disabled:opacity-60 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-full bg-navy-900 text-white font-semibold transition-all hover:scale-[1.02] hover:bg-navy-800 disabled:opacity-60 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
             >
-              {loadingA ? "Verificando..." : "Ingresar"}
+              {loading ? (
+                <Spinner label="Verificando..." />
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6" />
+                  </svg>
+                  Ingresar
+                </>
+              )}
             </button>
           </form>
 
@@ -202,61 +175,22 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
             <br />
             Legajo: 45231 · @frc · Contraseña: utn2026
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {tab === "mfa" && mfaStep === "identify" && (
-        <div role="tabpanel">
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5">
-            Ingresá tu legajo y contraseña; después confirmás con rostro,
-            huella o llave de seguridad (FIDO2) como segundo factor.
-          </p>
-
-          {errorB && (
-            <div role="alert" className="rounded-xl bg-coral-50 dark:bg-coral-500/10 border border-coral-400/30 text-coral-600 dark:text-coral-300 text-sm px-4 py-3 mb-4">
-              {errorB}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmitB} className="space-y-4" noValidate>
-            <IdentityFields
-              idPrefix="b"
-              values={formB}
-              onChange={setFormB}
-              invalid={Boolean(errorB)}
-              domainOptions={domainOptions}
-              defaultDomain={defaultDomain}
-            />
-            <button
-              type="submit"
-              disabled={loadingB}
-              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-full bg-cyan-500 text-white font-semibold transition-all hover:scale-[1.02] hover:bg-cyan-600 disabled:opacity-60 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6" />
-              </svg>
-              {loadingB ? "Verificando..." : "Continuar y confirmar con FIDO2"}
-            </button>
-          </form>
-
-          <div className="mt-5 rounded-xl bg-slate-900/5 dark:bg-white/5 px-4 py-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Necesitás tener una passkey ya registrada. Si todavía no tenés
-            una, ingresá primero con la opción tradicional.
-          </div>
-        </div>
-      )}
-
-      {tab === "mfa" && mfaStep === "confirm" && (
-        <div role="tabpanel" className="text-center">
+      {step === "confirm" && (
+        <motion.div key="confirm" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
             Ya validamos tu legajo y contraseña. Confirmá tu identidad para
             terminar de ingresar.
           </p>
-          <button
+          <motion.button
             type="button"
             onClick={handleConfirm}
             disabled={confirming}
-            className="w-full flex items-center gap-4 px-5 py-5 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-all hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center gap-4 px-5 py-5 rounded-2xl border-2 border-cyan-500/40 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
           >
             <span className="shrink-0 w-12 h-12 rounded-xl bg-cyan-500 text-white flex items-center justify-center" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -265,27 +199,28 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
             </span>
             <span className="text-left">
               <span className="block font-bold text-navy-900 dark:text-white">Confirmar con Rostro / Huella</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">FIDO2/WebAuthn · Passwordless</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">FIDO2/WebAuthn</span>
             </span>
-          </button>
+          </motion.button>
           <div
             role="status"
             aria-live="polite"
-            className={`mt-4 text-sm ${
+            className={`mt-4 text-sm flex items-center justify-center gap-2 ${
               confirmStatus.tone === "error" ? "text-coral-500" : confirmStatus.tone === "success" ? "text-emerald-500" : "text-slate-400"
             }`}
           >
-            {confirmStatus.text}
+            {confirming && confirmStatus.tone === "idle" ? <Spinner label={confirmStatus.text} size={16} /> : confirmStatus.text}
           </div>
           <button
             type="button"
-            onClick={() => setMfaStep("identify")}
+            onClick={() => setStep("identify")}
             className="mt-3 text-sm font-semibold text-slate-400 hover:text-navy-700 dark:hover:text-white"
           >
             Volver
           </button>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

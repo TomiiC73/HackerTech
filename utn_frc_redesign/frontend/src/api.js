@@ -16,12 +16,11 @@ export function getHome() {
   return fetch("/api/home").then((r) => r.json());
 }
 
+// Login unico: el backend decide a donde mandar segun `next` — directo a
+// /portal si es el primer ingreso sin passkey, o /webauthn si ya tiene una
+// y hay que confirmarla como segundo factor (ver LoginCard.jsx).
 export function login({ legajo, domain, password }) {
   return postJson("/api/login", { legajo, domain, password });
-}
-
-export function loginMfa({ legajo, domain, password }) {
-  return postJson("/api/login/mfa", { legajo, domain, password });
 }
 
 // --- WebAuthn: helpers base64url + ceremonia completa de confirmacion ---
@@ -94,6 +93,43 @@ export async function confirmWithPasskey() {
 
     const result = await postJson("/api/webauthn/authenticate/complete", credentialJson);
     return result.ok ? { ok: true, next: result.next } : { ok: false, error: result.error };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Alta de aspirantes, paso 2: arranca el enrolamiento FIDO2 obligatorio con
+// los datos ya cargados en el paso 1 (staging server-side, ver
+// app.py /api/signup/start) y completa la ceremonia WebAuthn de punta a
+// punta. Devuelve { ok, legajo, domain } o { ok: false, error }.
+export async function enrollSignup(signupData) {
+  if (!window.PublicKeyCredential) {
+    return { ok: false, error: "Este navegador no soporta passkeys." };
+  }
+  try {
+    const optionsJson = await postJson("/api/signup/start", signupData);
+    if (optionsJson.ok === false) {
+      return { ok: false, error: optionsJson.error };
+    }
+    const publicKey = decodeCreationOptions(optionsJson);
+
+    const credential = await navigator.credentials.create({ publicKey });
+    const attestationResponse = credential.response;
+    const credentialJson = {
+      id: credential.id,
+      rawId: bufferToBase64url(credential.rawId),
+      type: credential.type,
+      clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
+      response: {
+        clientDataJSON: bufferToBase64url(attestationResponse.clientDataJSON),
+        attestationObject: bufferToBase64url(attestationResponse.attestationObject),
+      },
+    };
+
+    const result = await postJson("/api/signup/register/complete", credentialJson);
+    return result.ok
+      ? { ok: true, legajo: result.legajo, domain: result.domain }
+      : { ok: false, error: result.error };
   } catch (err) {
     return { ok: false, error: err.message };
   }

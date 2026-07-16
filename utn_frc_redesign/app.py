@@ -1,20 +1,23 @@
 """
-Rediseño UTN-FRC: portal moderno con dos formas de iniciar sesión.
+Rediseño UTN-FRC: portal moderno con login unificado (Modo B).
 
-Punto de entrada Flask. Define las rutas de las paginas y la API de
-autenticacion:
-  - Ingreso tradicional: legajo + dominio ("@") + contraseña, un solo factor.
-  - Modo B: la misma identificación (legajo + dominio + contraseña) más una
-    confirmación FIDO2/WebAuthn obligatoria como segundo factor.
-La logica de WebAuthn vive en webauthn_auth.py.
+Punto de entrada Flask. Un solo flujo de login: legajo + dominio ("@") +
+contraseña identifican al usuario; si ya tiene una passkey FIDO2/WebAuthn
+registrada, se exige confirmarla como segundo factor antes de autenticar
+del todo. Si todavia no registro ninguna (primer ingreso), la contraseña
+alcanza para entrar y desde "Mi portal" puede registrar una passkey para
+que las proximas veces sí se le exija. La logica de WebAuthn vive en
+webauthn_auth.py.
 """
 import base64
+import random
+import secrets
 import socket
 from functools import wraps
 
 import webauthn
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import config
 import db
@@ -96,6 +99,17 @@ def _options_json(options):
     return webauthn.options_to_json(options), 200, {"Content-Type": "application/json"}
 
 
+def _generate_unique_legajo(domain):
+    """Legajo aleatorio con el prefijo institucional (ej. "50123"), unico
+    para el dominio dado. Reintenta ante una colision improbable."""
+    for _ in range(50):
+        suffix = "".join(str(random.randint(0, 9)) for _ in range(config.LEGAJO_SUFFIX_DIGITS))
+        candidate = f"{config.LEGAJO_PREFIX}{suffix}"
+        if db.get_user_by_legajo(candidate, domain) is None:
+            return candidate
+    raise RuntimeError("No se pudo generar un legajo unico tras varios intentos.")
+
+
 # --------------------------------------------------------------------
 # Paginas
 # --------------------------------------------------------------------
@@ -105,6 +119,7 @@ def index():
         "index.html",
         news_items=config.NEWS_ITEMS,
         quick_access_items=config.QUICK_ACCESS_ITEMS,
+        careers=config.CAREERS,
     )
 
 
@@ -123,6 +138,7 @@ def api_home():
     return jsonify(
         news_items=config.NEWS_ITEMS,
         quick_access_items=config.QUICK_ACCESS_ITEMS,
+        careers=config.CAREERS,
         domain_options=config.DOMAIN_OPTIONS,
         default_domain=config.DEFAULT_DOMAIN,
     )
@@ -153,7 +169,12 @@ def logout():
 
 
 # --------------------------------------------------------------------
-# API: ingreso tradicional (legajo + dominio + contraseña, un solo factor)
+# API: login unico - legajo + dominio + contraseña identifican al usuario.
+# Si ya tiene una passkey registrada, queda pre-autenticado y debe
+# confirmarla en /webauthn (segundo factor obligatorio). Si todavia no
+# registro ninguna, la contraseña sola alcanza (primer ingreso / bootstrap):
+# sin esto, nadie podria llegar nunca a "Mi portal" para registrar su
+# primera passkey.
 # --------------------------------------------------------------------
 @app.route("/api/login", methods=["POST"])
 def api_login():
@@ -162,31 +183,101 @@ def api_login():
     if error_response:
         return error_response
 
+    if db.has_webauthn_credential(user["id"]):
+        session.clear()
+        session[config.SESSION_KEY_PRE_AUTH] = user["id"]
+        return jsonify(ok=True, next=url_for("webauthn_confirm_page"))
+
     _login_user(user["id"], via=config.AUTH_VIA_PASSWORD)
     return jsonify(ok=True, next=url_for("portal"))
 
 
 # --------------------------------------------------------------------
-# API: Modo B, paso 1 - misma identificación, pero exige un segundo factor
-# FIDO2 a continuación. Requiere tener una passkey ya registrada.
+# API: alta de aspirantes (stepper de 3 pasos en el frontend).
+#
+# Paso 1 (datos + carrera): se validan y quedan en STAGING en la sesion
+# (session[SESSION_KEY_PENDING_SIGNUP]) - la cuenta todavia NO se crea en
+# la base. Se devuelven opciones de registro FIDO2 para un "usuario"
+# temporal (id aleatorio, no persistido).
+#
+# Paso 2 (enrolamiento FIDO2 obligatorio): recien cuando la ceremonia
+# WebAuthn se completa con exito se genera el legajo y se inserta la fila
+# real en `users`, y ahi si se guarda la credencial contra su id real. Si
+# la ceremonia falla, no queda ninguna cuenta a medio crear (rollback):
+# una cuenta sin credencial asociada seria inutilizable, porque este
+# login exige FIDO2 en cuanto detecta una credencial - y sin ella, exigir
+# fallaria en un estado raro. Mas simple: sin FIDO2 exitoso, no hay alta.
 # --------------------------------------------------------------------
-@app.route("/api/login/mfa", methods=["POST"])
-def api_login_mfa():
+@app.route("/api/signup/start", methods=["POST"])
+def api_signup_start():
     payload = request.get_json(silent=True) or {}
-    user, error_response = _identify_user(payload)
-    if error_response:
-        return error_response
+    full_name = (payload.get("full_name") or "").strip()
+    dni = (payload.get("dni") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    career = (payload.get("career") or "").strip()
 
-    if not db.has_webauthn_credential(user["id"]):
-        return jsonify(
-            ok=False,
-            error="Todavía no registraste una passkey. Ingresá con la opción tradicional y registrala desde Mi portal.",
-        ), 409
+    if not full_name or not dni or not email or not password or not career:
+        return jsonify(ok=False, error="Completá todos los campos."), 400
+    if len(password) < 6:
+        return jsonify(ok=False, error="La contraseña debe tener al menos 6 caracteres."), 400
+    if db.email_exists(email):
+        return jsonify(ok=False, error="Ya existe una cuenta con ese email."), 409
 
-    # Primer factor superado; falta la confirmación FIDO2.
+    rp_id, _origin = _webauthn_ids()
+    # id puramente temporal para la ceremonia WebAuthn: no se persiste, y
+    # complete_registration() usa el id REAL (recien creado) mas adelante.
+    temp_user = {"id": secrets.randbelow(2**31), "email": email, "full_name": full_name}
+    options = webauthn_auth.build_registration_options(temp_user, rp_id)
+
     session.clear()
-    session[config.SESSION_KEY_PRE_AUTH] = user["id"]
-    return jsonify(ok=True, next=url_for("webauthn_confirm_page"))
+    session[config.SESSION_KEY_WEBAUTHN_CHALLENGE] = base64.b64encode(options.challenge).decode("ascii")
+    session[config.SESSION_KEY_PENDING_SIGNUP] = {
+        "full_name": full_name,
+        "dni": dni,
+        "email": email,
+        "password_hash": generate_password_hash(password),
+        "career": career,
+    }
+    return _options_json(options)
+
+
+@app.route("/api/signup/register/complete", methods=["POST"])
+def api_signup_register_complete():
+    pending = session.get(config.SESSION_KEY_PENDING_SIGNUP)
+    challenge_b64 = session.get(config.SESSION_KEY_WEBAUTHN_CHALLENGE)
+    if not pending or not challenge_b64:
+        return jsonify(ok=False, error="No hay una alta pendiente."), 400
+
+    rp_id, origin = _webauthn_ids()
+    credential_json = request.get_data(as_text=True)
+
+    legajo = _generate_unique_legajo(config.DEFAULT_DOMAIN)
+    user_id = db.insert_user(
+        legajo=legajo,
+        domain=config.DEFAULT_DOMAIN,
+        email=pending["email"],
+        password_hash=pending["password_hash"],
+        full_name=pending["full_name"],
+        dni=pending["dni"],
+        role=f"Alumno — {pending['career']}",
+    )
+
+    try:
+        expected_challenge = base64.b64decode(challenge_b64)
+        webauthn_auth.complete_registration({"id": user_id}, credential_json, expected_challenge, rp_id, origin)
+    except Exception as error:
+        db.delete_user(user_id)  # sin credencial, la cuenta no queda utilizable: se revierte
+        app.logger.warning("Enrolamiento de alta fallido: %s", error)
+        return jsonify(ok=False, error="No se pudo completar el enrolamiento biométrico."), 400
+
+    session.pop(config.SESSION_KEY_PENDING_SIGNUP, None)
+    session.pop(config.SESSION_KEY_WEBAUTHN_CHALLENGE, None)
+
+    # Cuenta y credencial ya validas: se loguea directo (segundo factor
+    # recien enrolado, no haria falta volver a pedirlo en el momento).
+    _login_user(user_id, via=config.AUTH_VIA_WEBAUTHN)
+    return jsonify(ok=True, legajo=legajo, domain=config.DEFAULT_DOMAIN)
 
 
 # --------------------------------------------------------------------

@@ -27,6 +27,11 @@ SESSION_KEY_AUTHENTICATED = "authenticated"
 SESSION_KEY_USER_ID = "user_id"
 SESSION_KEY_AUTH_VIA = "authenticated_via"
 SESSION_KEY_WEBAUTHN_CHALLENGE = "webauthn_challenge"
+SESSION_KEY_PENDING_SIGNUP = "pending_signup"  # datos de alta en staging hasta que el enrolamiento FIDO2 termine
+
+# --- Alta de aspirantes: generacion de legajo ---
+LEGAJO_PREFIX = "50"
+LEGAJO_SUFFIX_DIGITS = 3
 
 AUTH_VIA_PASSWORD = "password"           # ingreso tradicional: un solo factor
 AUTH_VIA_WEBAUTHN = "password_webauthn"  # Modo B: identificacion + confirmacion FIDO2
@@ -93,6 +98,106 @@ NEWS_ITEMS = [
             "como espacio de práctica socioterritorial."
         ),
         "featured": False,
+    },
+]
+
+CAREERS = [
+    {
+        "name": "Ingeniería Civil",
+        "description": (
+            "El Ingeniero Civil está capacitado para proyectar, mensurar, planificar, "
+            "dirigir, construir, auditar, etc, el desarrollo de todo tipo de obras de "
+            "infraestructura y sus instalaciones tales como: viviendas, edificios, "
+            "naves industriales, estaciones de servicio, carreteras, puentes, obras "
+            "ferroviarias, canales, diques, puertos, aeropuertos, desarrollos urbanos, "
+            "entre otras."
+        ),
+        "degree_title": "Ingeniero Civil",
+        "duration": "5 años y medio",
+        "intermediate_title": None,
+    },
+    {
+        "name": "Ingeniería en Energía Eléctrica",
+        "description": (
+            "La Carrera de Ingeniería en Energía Eléctrica responde a la necesidad de "
+            "formar profesionales aptos para cumplir funciones técnicas o de gestión "
+            "en el área de generación, transmisión, distribución y utilización de la "
+            "energía eléctrica."
+        ),
+        "degree_title": "Ingeniero Electricista",
+        "duration": "5 años",
+        "intermediate_title": None,
+    },
+    {
+        "name": "Ingeniería Electrónica",
+        "description": (
+            "La Carrera tiene como objetivo formar profesionales capacitados para "
+            "afrontar con solvencia el planeamiento, desarrollo, dirección y control "
+            "de sistemas electrónicos; abordar proyectos de investigación y "
+            "desarrollo, administrando los recursos humanos y físicos necesarios."
+        ),
+        "degree_title": "Ingeniero Electrónico",
+        "duration": "5 años y medio",
+        "intermediate_title": "Técnico Universitario en Electrónica (Duración 4 años)",
+    },
+    {
+        "name": "Ingeniería Industrial",
+        "description": (
+            "Esta Carrera forma profesionales capaces de implementar, evaluar, "
+            "organizar y conducir sistemas productivos; aplicando diversas técnicas, "
+            "recursos humanos, materiales, equipos, máquinas e instalaciones, con el "
+            "objeto de ordenar económica y productivamente las empresas de bienes y "
+            "servicios destinados a satisfacer necesidades de la sociedad."
+        ),
+        "degree_title": "Ingeniero Industrial",
+        "duration": "5 años",
+        "intermediate_title": None,
+    },
+    {
+        "name": "Ingeniería Mecánica",
+        "description": (
+            "Esta formación académica permite diseñar, planificar y administrar "
+            "procesos industriales en un extenso campo ocupacional. Planear impactos "
+            "económicos, sociales y ambientales en el desarrollo de proyectos, "
+            "integrar y dirigir equipos con actitud emprendedora y de liderazgo."
+        ),
+        "degree_title": "Ingeniero Mecánico",
+        "duration": "5 años",
+        "intermediate_title": None,
+    },
+    {
+        "name": "Ingeniería Metalúrgica",
+        "description": (
+            "Capacita en el estudio, selección, procesamiento, investigación y "
+            "asesoramiento en general de metales y aleaciones, aceros comunes y "
+            "especiales, aleaciones de aluminio, magnesio, cobre, como también en los "
+            "no metales como cerámicos, plásticos reforzados, fibras de carbono, etc."
+        ),
+        "degree_title": "Ingeniero Metalúrgico",
+        "duration": "5 años",
+        "intermediate_title": "Técnico Universitario Metalúrgico (Duración 3 años)",
+    },
+    {
+        "name": "Ingeniería Química",
+        "description": (
+            "Esta rama de la Ingeniería se dedica al estudio, síntesis, desarrollo, "
+            "diseño, operación y optimización de todos aquellos procesos industriales "
+            "que producen cambios físicos, químicos y/o bioquímicos en los materiales."
+        ),
+        "degree_title": "Ingeniero Químico",
+        "duration": "5 años",
+        "intermediate_title": "Técnico Universitario en Química (Duración 3 años)",
+    },
+    {
+        "name": "Ingeniería en Sistemas de Información",
+        "description": (
+            "Formación analítica que permite al profesional interpretar y resolver "
+            "problemas mediante el empleo de metodologías de sistemas y tecnologías "
+            "de procesamiento de información."
+        ),
+        "degree_title": "Ingeniero en Sistemas de Información",
+        "duration": "5 años",
+        "intermediate_title": "Analista Universitario de Sistemas (Duración: 3 años)",
     },
 ]
 

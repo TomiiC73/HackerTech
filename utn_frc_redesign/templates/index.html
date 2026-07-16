@@ -67,27 +67,27 @@
   </div>
 </section>
 
-<section class="py-16 sm:py-20 px-5 sm:px-8" id="carreras" aria-labelledby="carreras-title">
+<section class="py-16 sm:py-20 px-5 sm:px-8 bg-white border-y border-slate-200" id="carreras" aria-labelledby="carreras-title">
   <div class="max-w-6xl mx-auto">
     <div class="text-xs font-bold uppercase tracking-[0.15em] text-cyan-600 mb-2">Oferta académica</div>
-    <h2 id="carreras-title" class="text-2xl sm:text-3xl font-extrabold text-navy-900 mb-10">Carreras de grado y tecnicaturas</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="border border-slate-200 rounded-2xl p-5">
-        <div class="font-bold text-navy-900 mb-1">Ingeniería en Sistemas de Información</div>
-        <div class="text-xs text-slate-500">Grado · 5 años</div>
-      </div>
-      <div class="border border-slate-200 rounded-2xl p-5">
-        <div class="font-bold text-navy-900 mb-1">Ingeniería Civil</div>
-        <div class="text-xs text-slate-500">Grado · 5 años</div>
-      </div>
-      <div class="border border-slate-200 rounded-2xl p-5">
-        <div class="font-bold text-navy-900 mb-1">Ingeniería Electrónica</div>
-        <div class="text-xs text-slate-500">Grado · 5 años</div>
-      </div>
-      <div class="border border-slate-200 rounded-2xl p-5">
-        <div class="font-bold text-navy-900 mb-1">Tecnicatura en Mecatrónica</div>
-        <div class="text-xs text-slate-500">Tecnicatura · 2 años</div>
-      </div>
+    <h2 id="carreras-title" class="text-2xl sm:text-3xl font-extrabold text-navy-900 mb-10">Carreras de grado</h2>
+    <div class="grid gap-5 lg:grid-cols-2">
+      {% for career in careers %}
+      <article class="border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row gap-5">
+        <div class="flex-1">
+          <h3 class="font-bold text-lg text-navy-900 mb-2">{{ career.name }}</h3>
+          <p class="text-sm text-slate-600 leading-relaxed mb-2">{{ career.description }}</p>
+          {% if career.intermediate_title %}
+          <p class="text-xs text-slate-500 italic">Título intermedio: {{ career.intermediate_title }}</p>
+          {% endif %}
+        </div>
+        <div class="shrink-0 sm:w-44 rounded-xl bg-navy-900 text-white p-4 flex flex-col justify-center gap-1">
+          <div class="text-[10px] uppercase tracking-wider text-cyan-300 font-bold">Título de grado</div>
+          <div class="font-bold text-sm leading-snug">{{ career.degree_title }}</div>
+          <div class="text-xs text-slate-300">Duración {{ career.duration }}</div>
+        </div>
+      </article>
+      {% endfor %}
     </div>
   </div>
 </section>

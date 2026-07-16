@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import UtnLogo from "./UtnLogo";
 
 const MENUS = {
   institucional: {
@@ -153,12 +155,13 @@ export default function NavBar({ darkMode, onToggleDarkMode }) {
       ref={navRef}
       className="sticky top-0 z-40 bg-white/90 dark:bg-carbon-950/90 backdrop-blur border-b border-slate-200 dark:border-carbon-700"
     >
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center gap-8">
-        <a href="/" className="flex items-center gap-2.5 font-extrabold shrink-0" aria-label="UTN Facultad Regional Córdoba">
-          <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-navy-800 text-white text-xs tracking-wide">
-            UTN
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 h-20 flex items-center gap-8">
+        <a href="/" className="flex items-center gap-3 shrink-0" aria-label="UTN Facultad Regional Córdoba, ir al inicio">
+          <UtnLogo withText={false} className="w-11 h-11 text-navy-900 dark:text-white shrink-0" />
+          <span className="leading-tight hidden xs:block">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Universidad Tecnológica Nacional</span>
+            <span className="block text-[15px] font-extrabold text-navy-900 dark:text-white">Facultad Regional Córdoba</span>
           </span>
-          <span className="text-[15px] text-navy-900 dark:text-white hidden xs:inline">Facultad Regional Córdoba</span>
         </a>
 
         <nav className="hidden lg:flex items-center gap-7" aria-label="Navegación principal">
@@ -192,11 +195,19 @@ export default function NavBar({ darkMode, onToggleDarkMode }) {
             )}
           </button>
           <a
+            href="/signup"
+            className="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-full text-navy-800 dark:text-white hover:bg-slate-100 dark:hover:bg-carbon-800 transition-colors"
+          >
+            Inscribite
+          </a>
+          <motion.a
             href="#login"
-            className="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-full bg-navy-800 text-white hover:bg-navy-900 transition-all hover:scale-[1.03] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+            whileHover={{ scale: 1.04, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            className="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-full bg-navy-800 text-white shadow-sm hover:shadow-premium hover:bg-navy-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
           >
             Iniciar sesión
-          </a>
+          </motion.a>
           <button
             type="button"
             className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300"
@@ -220,6 +231,9 @@ export default function NavBar({ darkMode, onToggleDarkMode }) {
           ))}
           <a href="#bedelia" className="py-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
             Bedelía
+          </a>
+          <a href="/signup" className="py-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Inscribite
           </a>
           <a href="#login" className="mt-2 text-center text-sm font-semibold px-4 py-2.5 rounded-full bg-navy-800 text-white">
             Iniciar sesión
