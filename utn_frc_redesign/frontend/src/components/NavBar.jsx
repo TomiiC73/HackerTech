@@ -157,7 +157,7 @@ export default function NavBar({ darkMode, onToggleDarkMode }) {
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-20 flex items-center gap-8">
         <a href="/" className="flex items-center gap-3 shrink-0" aria-label="UTN Facultad Regional Córdoba, ir al inicio">
-          <UtnLogo withText={false} className="w-11 h-11 text-navy-900 dark:text-white shrink-0" />
+          <UtnLogo className="w-11 h-11 dark:invert shrink-0" />
           <span className="leading-tight hidden xs:block">
             <span className="block text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Universidad Tecnológica Nacional</span>
             <span className="block text-[15px] font-extrabold text-navy-900 dark:text-white">Facultad Regional Córdoba</span>

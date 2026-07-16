@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="bg-navy-950 text-slate-300">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2">
-          <UtnLogo withText className="h-24 text-white mb-4" />
+          <UtnLogo className="h-24 mb-4 invert" />
           <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
             Facultad Regional Córdoba · Maestro M. López 675, Córdoba, Argentina.
           </p>

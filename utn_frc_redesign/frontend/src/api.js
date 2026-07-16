@@ -2,6 +2,7 @@
 // relativas ("/api/...") y en dev pasan por el proxy de Vite (ver
 // vite.config.js), asi que nunca hace falta lidiar con CORS ni con un
 // host absoluto distinto entre dev y produccion.
+import { translateWebAuthnError } from "./webauthnErrors";
 
 async function postJson(url, body) {
   const response = await fetch(url, {
@@ -23,7 +24,7 @@ export function login({ legajo, domain, password }) {
   return postJson("/api/login", { legajo, domain, password });
 }
 
-// --- WebAuthn: helpers base64url + ceremonia completa de confirmacion ---
+// --- WebAuthn: helpers base64url + ceremonias completas ---
 // Misma logica que ../static/js/webauthn-common.js (backend sin cambios),
 // solo reescrita en JS moderno para el frontend React.
 
@@ -66,35 +67,62 @@ function decodeCreationOptions(optionsJson) {
   return optionsJson;
 }
 
+// Serializa una credencial de AUTENTICACION (navigator.credentials.get) al
+// formato que espera py_webauthn del lado del servidor. Compartido por
+// confirmWithPasskey(): antes estaba repetido inline en cada funcion.
+function buildAssertionCredentialJson(credential) {
+  const assertionResponse = credential.response;
+  return {
+    id: credential.id,
+    rawId: bufferToBase64url(credential.rawId),
+    type: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
+    response: {
+      clientDataJSON: bufferToBase64url(assertionResponse.clientDataJSON),
+      authenticatorData: bufferToBase64url(assertionResponse.authenticatorData),
+      signature: bufferToBase64url(assertionResponse.signature),
+      userHandle: assertionResponse.userHandle ? bufferToBase64url(assertionResponse.userHandle) : null,
+    },
+  };
+}
+
+// Serializa una credencial de REGISTRO (navigator.credentials.create) al
+// formato que espera py_webauthn. Compartido por enrollSignup() y
+// registerPasskey(): antes estaba repetido inline en cada funcion.
+function buildAttestationCredentialJson(credential) {
+  const attestationResponse = credential.response;
+  return {
+    id: credential.id,
+    rawId: bufferToBase64url(credential.rawId),
+    type: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
+    response: {
+      clientDataJSON: bufferToBase64url(attestationResponse.clientDataJSON),
+      attestationObject: bufferToBase64url(attestationResponse.attestationObject),
+    },
+  };
+}
+
+function unsupportedResult() {
+  return { ok: false, error: "Este navegador no soporta passkeys.", recoverable: true };
+}
+
 // Paso 2 del Modo B: confirma con FIDO2 al usuario ya identificado por
 // legajo+dominio+contraseña (session pre_auth en el backend).
 export async function confirmWithPasskey() {
-  if (!window.PublicKeyCredential) {
-    return { ok: false, error: "Este navegador no soporta passkeys." };
-  }
+  if (!window.PublicKeyCredential) return unsupportedResult();
+
   try {
     const optionsJson = await fetch("/api/webauthn/authenticate/begin", { method: "POST" }).then((r) => r.json());
     const publicKey = decodeRequestOptions(optionsJson);
 
     const credential = await navigator.credentials.get({ publicKey });
-    const assertionResponse = credential.response;
-    const credentialJson = {
-      id: credential.id,
-      rawId: bufferToBase64url(credential.rawId),
-      type: credential.type,
-      clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
-      response: {
-        clientDataJSON: bufferToBase64url(assertionResponse.clientDataJSON),
-        authenticatorData: bufferToBase64url(assertionResponse.authenticatorData),
-        signature: bufferToBase64url(assertionResponse.signature),
-        userHandle: assertionResponse.userHandle ? bufferToBase64url(assertionResponse.userHandle) : null,
-      },
-    };
+    if (!credential) return unsupportedResult();
 
-    const result = await postJson("/api/webauthn/authenticate/complete", credentialJson);
+    const result = await postJson("/api/webauthn/authenticate/complete", buildAssertionCredentialJson(credential));
     return result.ok ? { ok: true, next: result.next } : { ok: false, error: result.error };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: translateWebAuthnError(err), recoverable: true, cause: err };
   }
 }
 
@@ -103,9 +131,8 @@ export async function confirmWithPasskey() {
 // app.py /api/signup/start) y completa la ceremonia WebAuthn de punta a
 // punta. Devuelve { ok, legajo, domain } o { ok: false, error }.
 export async function enrollSignup(signupData) {
-  if (!window.PublicKeyCredential) {
-    return { ok: false, error: "Este navegador no soporta passkeys." };
-  }
+  if (!window.PublicKeyCredential) return unsupportedResult();
+
   try {
     const optionsJson = await postJson("/api/signup/start", signupData);
     if (optionsJson.ok === false) {
@@ -114,53 +141,32 @@ export async function enrollSignup(signupData) {
     const publicKey = decodeCreationOptions(optionsJson);
 
     const credential = await navigator.credentials.create({ publicKey });
-    const attestationResponse = credential.response;
-    const credentialJson = {
-      id: credential.id,
-      rawId: bufferToBase64url(credential.rawId),
-      type: credential.type,
-      clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
-      response: {
-        clientDataJSON: bufferToBase64url(attestationResponse.clientDataJSON),
-        attestationObject: bufferToBase64url(attestationResponse.attestationObject),
-      },
-    };
+    if (!credential) return unsupportedResult();
 
-    const result = await postJson("/api/signup/register/complete", credentialJson);
+    const result = await postJson("/api/signup/register/complete", buildAttestationCredentialJson(credential));
     return result.ok
       ? { ok: true, legajo: result.legajo, domain: result.domain }
       : { ok: false, error: result.error };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: translateWebAuthnError(err), recoverable: true, cause: err };
   }
 }
 
 // Registrar una passkey nueva (requiere estar logueado ya). No la usa el
 // LoginCard, pero queda lista para un futuro "Mi portal" en React.
 export async function registerPasskey() {
-  if (!window.PublicKeyCredential) {
-    return { ok: false, error: "Este navegador no soporta passkeys." };
-  }
+  if (!window.PublicKeyCredential) return unsupportedResult();
+
   try {
     const optionsJson = await fetch("/api/webauthn/register/begin", { method: "POST" }).then((r) => r.json());
     const publicKey = decodeCreationOptions(optionsJson);
 
     const credential = await navigator.credentials.create({ publicKey });
-    const attestationResponse = credential.response;
-    const credentialJson = {
-      id: credential.id,
-      rawId: bufferToBase64url(credential.rawId),
-      type: credential.type,
-      clientExtensionResults: credential.getClientExtensionResults ? credential.getClientExtensionResults() : {},
-      response: {
-        clientDataJSON: bufferToBase64url(attestationResponse.clientDataJSON),
-        attestationObject: bufferToBase64url(attestationResponse.attestationObject),
-      },
-    };
+    if (!credential) return unsupportedResult();
 
-    const result = await postJson("/api/webauthn/register/complete", credentialJson);
+    const result = await postJson("/api/webauthn/register/complete", buildAttestationCredentialJson(credential));
     return result.ok ? { ok: true } : { ok: false, error: result.error };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: translateWebAuthnError(err), recoverable: true, cause: err };
   }
 }

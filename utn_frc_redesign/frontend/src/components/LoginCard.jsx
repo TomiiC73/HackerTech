@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { confirmWithPasskey, login } from "../api";
 import Spinner from "./Spinner";
+import Toast from "./Toast";
 
 const stepVariants = {
   enter: { opacity: 0, x: 16 },
@@ -84,6 +85,15 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
   const [loading, setLoading] = useState(false);
   const [confirmStatus, setConfirmStatus] = useState({ text: "", tone: "idle" });
   const [confirming, setConfirming] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  function backToPasswordMode() {
+    // Modo A: el usuario vuelve a identificarse desde cero. No reusamos la
+    // contraseña anterior (ya se descarto al pasar a "confirm", ver abajo).
+    setToast(null);
+    setConfirmStatus({ text: "", tone: "idle" });
+    setStep("identify");
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -97,6 +107,10 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
       }
       if (result.next === "/webauthn") {
         // Ya tiene una passkey registrada: falta confirmarla (segundo factor).
+        // La contraseña ya cumplio su proposito (identificar al usuario) y
+        // no hace falta mantenerla en memoria del componente mas tiempo del
+        // necesario.
+        setForm((prev) => ({ ...prev, password: "" }));
         setStep("confirm");
       } else {
         // Primer ingreso sin passkey todavia: la contraseña ya alcanzo.
@@ -111,18 +125,26 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
 
   async function handleConfirm() {
     setConfirming(true);
+    setToast(null);
     setConfirmStatus({ text: "Confirmá en tu dispositivo...", tone: "idle" });
     const result = await confirmWithPasskey();
     if (result.ok) {
       setConfirmStatus({ text: "¡Listo! Entrando...", tone: "success" });
       window.location.href = result.next;
     } else {
-      setConfirmStatus({ text: `No se pudo confirmar: ${result.error}`, tone: "error" });
+      // Mensaje corto en linea (accesible via aria-live) + toast elegante
+      // con la traduccion especifica del error (NotAllowedError si cancelo
+      // el prompt, NotSupportedError si el dispositivo no admite FIDO2,
+      // etc. - ver webauthnErrors.js) y una salida rapida de vuelta a
+      // Modo A, para no dejar al usuario trabado si no puede usar FIDO2.
+      setConfirmStatus({ text: "No se pudo confirmar tu identidad.", tone: "error" });
       setConfirming(false);
+      setToast({ id: Date.now(), tone: "error", message: result.error });
     }
   }
 
   return (
+    <>
     <div
       id="login"
       className="relative rounded-3xl border border-white/40 dark:border-white/10 bg-white/60 dark:bg-white/[0.05] backdrop-blur-2xl shadow-premium p-8 sm:p-10 w-full max-w-md mx-auto"
@@ -157,16 +179,7 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 py-3.5 rounded-full bg-navy-900 text-white font-semibold transition-all hover:scale-[1.02] hover:bg-navy-800 disabled:opacity-60 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
             >
-              {loading ? (
-                <Spinner label="Verificando..." />
-              ) : (
-                <>
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M12 11c0 4-1 6-2 8M8 9a4 4 0 016-1M6 12c0-5 4-8 8-6.5M16 11c0 5-1 7-2 8M12 14c0 3 .5 5 1 6" />
-                  </svg>
-                  Ingresar
-                </>
-              )}
+              {loading ? <Spinner label="Verificando..." /> : "Ingresar"}
             </button>
           </form>
 
@@ -213,7 +226,7 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
           </div>
           <button
             type="button"
-            onClick={() => setStep("identify")}
+            onClick={backToPasswordMode}
             className="mt-3 text-sm font-semibold text-slate-400 hover:text-navy-700 dark:hover:text-white"
           >
             Volver
@@ -222,5 +235,10 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
       )}
       </AnimatePresence>
     </div>
+    {/* Fuera del card: su backdrop-blur-2xl crea un containing block para
+        position:fixed (igual que transform/filter), asi que un Toast
+        anidado ahi adentro quedaria anclado al card en vez del viewport. */}
+    <Toast toast={toast} onClose={() => setToast(null)} onAction={backToPasswordMode} actionLabel="Volver a Modo A" />
+    </>
   );
 }

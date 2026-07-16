@@ -147,9 +147,15 @@ def spa_assets(filename):
     return send_from_directory(FRONTEND_DIST / "assets", filename)
 
 
-@app.route("/favicon.svg")
-def favicon():
-    return send_from_directory(FRONTEND_DIST, "favicon.svg")
+# Cualquier archivo que Vite haya copiado tal cual desde frontend/public/ a
+# la raiz del build (favicon.svg, utn-logo.png, etc.) - evita agregar una
+# ruta dedicada por cada asset nuevo que se sume a public/.
+@app.route("/<string:public_asset>")
+def spa_public_asset(public_asset):
+    file_path = FRONTEND_DIST / public_asset
+    if not file_path.is_file():
+        return jsonify(ok=False, error="No encontrado."), 404
+    return send_from_directory(FRONTEND_DIST, public_asset)
 
 
 # --------------------------------------------------------------------
