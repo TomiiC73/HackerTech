@@ -231,7 +231,7 @@ export default function LoginCard({ domainOptions = [], defaultDomain = "frc" })
     {/* Fuera del card: su backdrop-blur-2xl crea un containing block para
         position:fixed (igual que transform/filter), asi que un Toast
         anidado ahi adentro quedaria anclado al card en vez del viewport. */}
-    <Toast toast={toast} onClose={() => setToast(null)} onAction={backToPasswordMode} actionLabel="Volver a Modo A" />
+    <Toast toast={toast} onClose={() => setToast(null)} onAction={backToPasswordMode} actionLabel="Volver a intentarlo" />
     </>
   );
 }

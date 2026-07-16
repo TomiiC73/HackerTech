@@ -6,10 +6,6 @@
   <div class="section__inner">
     <div class="section__eyebrow">Mi portal</div>
     <h1 class="section__title">Hola, {{ user.full_name.split(' ')[0] }} 👋</h1>
-    <p class="section__text">
-      Ingresaste con
-      {% if auth_via == 'webauthn' %}tu passkey (FIDO2/WebAuthn passwordless).{% else %}usuario y contraseña.{% endif %}
-    </p>
 
     <div class="portal-grid">
       <div class="portal-card">
@@ -25,11 +21,15 @@
         {% if has_passkey %}
           <p class="portal-card__desc">Ya tenés una passkey registrada. La próxima vez que inicies sesión te vamos a pedir que la confirmes.</p>
         {% else %}
-          <p class="portal-card__desc">
+          <p class="portal-card__desc" id="passkey-intro">
             Activá un acceso passwordless con el autenticador de tu
             dispositivo (Windows Hello, Touch ID). Elegí el método que uses
             habitualmente — el sistema operativo va a pedirte exactamente
             eso, o lo que tengas configurado, cuando confirmes.
+          </p>
+          <p class="portal-card__desc hidden" id="passkey-unsupported">
+            Tu dispositivo no soporta ningún método de seguridad biométrica
+            o PIN. Probá desde otro dispositivo compatible.
           </p>
           <div class="flex flex-col gap-2.5 mb-4" id="passkey-methods" role="group" aria-label="Método de verificación">
             <button type="button" data-method="huella"
@@ -61,11 +61,6 @@
               <span class="text-sm font-bold text-navy-900">Reconocimiento facial</span>
             </button>
           </div>
-          <p class="text-xs text-slate-400 mb-3">
-            Las tres opciones activan el mismo registro FIDO2/WebAuthn: es tu
-            sistema operativo, no esta página, el que efectivamente verifica
-            tu identidad.
-          </p>
           <div class="status-line" id="register-status"></div>
         {% endif %}
       </div>
