@@ -27,7 +27,6 @@
         <a href="{{ url_for('dashboard') }}">Cuenta</a>
         <a href="{{ url_for('logout') }}">Salir</a>
       {% else %}
-        <a href="{{ url_for('signup_page') }}">Crear cuenta</a>
         <a href="{{ url_for('login_page') }}" class="navbar__cta">Ingresar</a>
       {% endif %}
     </div>

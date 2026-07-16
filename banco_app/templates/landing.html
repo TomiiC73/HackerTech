@@ -170,7 +170,6 @@
         <a href="{{ url_for('dashboard') }}" class="hover:text-white transition-colors">Cuenta</a>
         <a href="{{ url_for('logout') }}" class="hover:text-white transition-colors">Salir</a>
       {% else %}
-        <a href="{{ url_for('signup_page') }}" class="hover:text-white transition-colors">Crear cuenta</a>
         <a href="{{ url_for('login_page') }}"
            class="px-5 py-2.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors">
           Ingresar
@@ -195,7 +194,6 @@
         <a href="{{ url_for('dashboard') }}">Cuenta</a>
         <a href="{{ url_for('logout') }}">Salir</a>
       {% else %}
-        <a href="{{ url_for('signup_page') }}">Crear cuenta</a>
         <a href="{{ url_for('login_page') }}" class="text-gold font-semibold">Ingresar →</a>
       {% endif %}
     </div>

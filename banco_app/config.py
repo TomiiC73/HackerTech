@@ -46,21 +46,16 @@ FACE_ORB_MIN_MATCHES = 150
 # Tamano al que se normalizan los rostros recortados antes de comparar.
 FACE_COMPARE_SIZE = (200, 200)
 
-# Un usuario puede guardar varias muestras de rostro (distintos frames del
-# alta); en el login se compara contra todas las suyas y se toma el mejor
-# match. Mas muestras = template mas robusto ante variaciones de luz/angulo
-# en logins futuros, sin tocar el umbral ni la falta de liveness de arriba.
-FACE_ENROLL_SAMPLES = 8          # cuantos frames se intentan capturar al alta
-FACE_ENROLL_MIN_SAMPLES = 3      # minimo de muestras con rostro detectado para crear la cuenta
+# Un usuario puede guardar varias muestras de rostro (varios frames
+# enrolados desde seed.py); en el login se compara contra todas las suyas
+# y se toma el mejor match. Mas muestras = template mas robusto ante
+# variaciones de luz/angulo en logins futuros, sin tocar el umbral ni la
+# falta de liveness de arriba.
 
-# --- Generacion de cuentas nuevas (alta de usuario) ---
-BANK_ENTITY_NUMBER = "031"       # numero de entidad ficticio
+# --- Datos de presentacion de la cuenta (dashboard) ---
 BANK_BRANCH_LABEL = "Sucursal Centro — Córdoba (031)"
 ACCOUNT_TYPE_LABEL = "Caja de ahorro en pesos"
 BANK_BIC = "HKBKARBA"            # codigo BIC/SWIFT ficticio
-NEW_ACCOUNT_BALANCE_ARS = 25000.00
-NEW_ACCOUNT_BALANCE_USD = 0.00
-NEW_ACCOUNT_DAILY_YIELD_ARS = 0.00
 
 # --- Datos del usuario de laboratorio (Carlos Rodriguez) ---
 # La contrasena en texto plano SOLO existe aca para que el instructor

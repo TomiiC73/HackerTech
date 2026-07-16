@@ -793,7 +793,7 @@ img {
 .face-shell__title { font-size: 30px; font-weight: 700; letter-spacing: 0.5px; color: var(--bg-navy); }
 .face-shell__subtitle { color: var(--text-mid); margin-top: 12px; max-width: 480px; font-size: 15.5px; }
 
-/* ---------------- Auth panes (login / signup) ---------------- */
+/* ---------------- Auth panes (login) ---------------- */
 .auth-card--wide { max-width: 520px; }
 
 .auth-pane__text {

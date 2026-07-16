@@ -12,7 +12,6 @@ from functools import wraps
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for
 from werkzeug.security import check_password_hash
 
-import accounts
 import config
 import db
 import face_auth
@@ -115,11 +114,6 @@ def login_page():
     return render_template("login.html")
 
 
-@app.route("/signup")
-def signup_page():
-    return render_template("signup.html")
-
-
 @app.route("/face")
 @require_pre_auth
 def face_page():
@@ -145,47 +139,6 @@ def dashboard():
 def logout():
     session.clear()
     return redirect(url_for("landing"))
-
-
-# --------------------------------------------------------------------
-# API: alta de cuenta nueva (con enrolamiento de rostro)
-# --------------------------------------------------------------------
-@app.route("/api/signup", methods=["POST"])
-def api_signup():
-    payload = request.get_json(silent=True) or {}
-    full_name = (payload.get("full_name") or "").strip()
-    email = (payload.get("email") or "").strip().lower()
-    password = payload.get("password") or ""
-    dni = (payload.get("dni") or "").strip()
-    frames = payload.get("faces") or []
-
-    if not full_name or not email or not password or not dni:
-        return jsonify(ok=False, error="Completá todos los campos."), 400
-    if len(password) < 6:
-        return jsonify(ok=False, error="La contraseña debe tener al menos 6 caracteres."), 400
-    if db.email_exists(email):
-        return jsonify(ok=False, error="Ya existe una cuenta con ese email."), 409
-
-    # Se extraen los rostros ANTES de crear la cuenta: si ninguno tiene un
-    # rostro detectable, no se crea nada.
-    face_samples = []
-    for frame in frames:
-        result = face_auth.enroll(frame)
-        if result.success:
-            face_samples.append(result.face_png)
-
-    if len(face_samples) < config.FACE_ENROLL_MIN_SAMPLES:
-        return jsonify(
-            ok=False,
-            error="No se detectó tu rostro. Encuadrá tu cara y volvé a intentar.",
-        ), 400
-
-    user_id = accounts.create_account(email, password, full_name, dni)
-    for face_png in face_samples:
-        db.insert_face(user_id, face_png)
-
-    _login_user(user_id)
-    return jsonify(ok=True, next=url_for("dashboard"), samples=len(face_samples))
 
 
 # --------------------------------------------------------------------
