@@ -47,16 +47,42 @@
     statusLine.className = "status-line error";
   }
 
-  // 1. Chequeo general (no distingue metodo especifico, ver comentario arriba).
-  if (!window.PublicKeyCredential || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-    showUnsupported();
-    return;
+  // Chequeo general (no distingue metodo especifico, ver comentario arriba).
+  // Se reusa tanto al cargar la pagina (para ocultar todo de entrada si no
+  // hay soporte) como antes de cada intento de create() (por si el chequeo
+  // inicial todavia no habia resuelto cuando el usuario ya toco un boton).
+  async function isPlatformAuthenticatorAvailable() {
+    if (!window.PublicKeyCredential || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      return false;
+    }
+    try {
+      return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch {
+      return false;
+    }
   }
-  PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-    .then((available) => {
-      if (!available) showUnsupported();
-    })
-    .catch(() => showUnsupported());
+
+  // Saca un metodo de la lista (fallo el chequeo previo o el create() en si)
+  // y ofrece los que quedan - o el mensaje final si ya no queda ninguno.
+  function dropMethodAndOfferRemaining(failedBtn, failureMessage) {
+    failedBtn.remove();
+    const remaining = Array.from(container.querySelectorAll(".passkey-method-btn"));
+    remaining.forEach((b) => (b.disabled = false));
+
+    if (remaining.length === 0) {
+      showNoMethodsLeft();
+      return;
+    }
+
+    const remainingLabels = remaining.map((b) => METHOD_LABELS[b.dataset.method]);
+    statusLine.textContent = `${failureMessage} ¿Querés probar con ${remainingLabels.join(" o ")}?`;
+    statusLine.className = "status-line error";
+  }
+
+  // 1. Chequeo general al cargar la pagina.
+  isPlatformAuthenticatorAvailable().then((available) => {
+    if (!available) showUnsupported();
+  });
 
   container.addEventListener("click", async (event) => {
     const btn = event.target.closest(".passkey-method-btn");
@@ -64,11 +90,28 @@
 
     const allButtons = Array.from(container.querySelectorAll(".passkey-method-btn"));
     allButtons.forEach((b) => (b.disabled = true));
+
+    // Re-chequeo antes de llamar a create(): si no hay ningun autenticador
+    // de plataforma, ni siquiera intentamos la ceremonia WebAuthn - se
+    // trata igual que un intento fallido de ESTE metodo (nunca un error
+    // generico) y se ofrecen los otros dos.
+    statusLine.textContent = "Verificando disponibilidad...";
+    statusLine.className = "status-line";
+    const available = await isPlatformAuthenticatorAvailable();
+    if (!available) {
+      dropMethodAndOfferRemaining(btn, "No se detectó un método de autenticación biométrica en este dispositivo.");
+      return;
+    }
+
     statusLine.textContent = CONFIRM_TEXT[btn.dataset.method] || "Confirmá en tu dispositivo...";
     statusLine.className = "status-line";
 
     const result = await window.registerPasskey();
     if (result.ok) {
+      // Exito: el SO pudo haber resuelto con un metodo distinto al elegido
+      // (p.ej. tocaste "Huella" pero el equipo solo tiene PIN configurado)
+      // - eso es esperado (ver comentario arriba) y sigue contando como
+      // registro valido, no como fallo.
       statusLine.textContent = "¡Passkey registrada! Recargando...";
       statusLine.className = "status-line success";
       setTimeout(() => window.location.reload(), 700);
@@ -78,21 +121,6 @@
     // 2/3. Fallback reactivo: recien con el intento fallido sabemos que ESE
     // metodo no funciono aca - se saca de la lista (no un error generico)
     // y se ofrecen los que quedan.
-    const failedMethod = btn.dataset.method;
-    btn.remove();
-    const remaining = Array.from(container.querySelectorAll(".passkey-method-btn"));
-    remaining.forEach((b) => (b.disabled = false));
-
-    if (remaining.length === 0) {
-      // 4. Se probaron las 3 y ninguna funciono.
-      showNoMethodsLeft();
-      return;
-    }
-
-    const remainingLabels = remaining.map((b) => METHOD_LABELS[b.dataset.method]);
-    statusLine.textContent =
-      `No pudimos usar ${METHOD_LABELS[failedMethod]} en este dispositivo. ` +
-      `¿Querés probar con ${remainingLabels.join(" o ")}?`;
-    statusLine.className = "status-line error";
+    dropMethodAndOfferRemaining(btn, `No pudimos usar ${METHOD_LABELS[btn.dataset.method]} en este dispositivo.`);
   });
 })();
