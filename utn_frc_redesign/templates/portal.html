@@ -72,6 +72,34 @@
           <div class="status-line" id="register-status"></div>
         {% endif %}
       </div>
+
+      <div class="portal-card materias-card">
+        <div class="portal-card__title">Materias</div>
+        <div class="materias-scroll">
+          <table class="materias-table">
+            <thead>
+              <tr>
+                <th>Materia</th>
+                {% for column in academic_columns %}
+                  <th>{{ column }}</th>
+                {% endfor %}
+                <th>Condición</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in academic_record %}
+                <tr>
+                  <td>{{ item.subject }}</td>
+                  {% for grade in item.grades %}
+                    <td>{{ grade if grade is not none else '—' }}</td>
+                  {% endfor %}
+                  <td><span class="condition-badge condition-badge--{{ item.condition.lower() }}">{{ item.condition }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </section>

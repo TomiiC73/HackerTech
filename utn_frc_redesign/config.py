@@ -215,6 +215,26 @@ CAREERS = [
     },
 ]
 
+# --- Historial academico de la demo (mock: no hay tabla de materias/notas
+# en la DB, alcanza con datos estaticos para la seccion "Materias" del
+# portal). Columnas fijas de notas (igual que el sistema de autogestion
+# real) - una materia que no curso alguna instancia deja "None" en esa
+# posicion y el template la muestra como "—".
+ACADEMIC_GRADE_COLUMNS = ["1° Parc.", "2° Parc.", "3° Parc.", "1° Integ.", "1° Teó.", "1° Recup."]
+
+ACADEMIC_RECORD = [
+        {
+        "subject": "Ingeniería y Calidad de Software",
+        "grades": [3, 3, None, 5, None, 1],
+        "condition": "RECURSE",
+    },
+    {
+        "subject": "Diseño de Sistemas de Información",
+        "grades": [2, 3, 4, 9, 9, 0],
+        "condition": "LIBRE",
+    }
+]
+
 QUICK_ACCESS_ITEMS = [
     {"label": "Autogestión", "description": "Inscripción a materias y exámenes", "icon": "grid"},
     {"label": "Educación Virtual", "description": "Aulas y campus virtual", "icon": "book"},

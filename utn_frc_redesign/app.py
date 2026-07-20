@@ -189,6 +189,8 @@ def portal():
         user=user,
         auth_via=session.get(config.SESSION_KEY_AUTH_VIA),
         has_passkey=db.has_webauthn_credential(user["id"]),
+        academic_columns=config.ACADEMIC_GRADE_COLUMNS,
+        academic_record=config.ACADEMIC_RECORD,
     )
 
 
