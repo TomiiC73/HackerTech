@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- PLACEHOLDER: reemplazar por la imagen definitiva del evento. -->
+  <!-- Fusible cortado, sin chispa (bomba desactivada) -->
+  <path d="M62 30 C58 22 66 16 60 8" fill="none" stroke="#8a8a92" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cuerpo de la bomba -->
+  <rect x="49" y="24" width="14" height="12" rx="3" fill="#2f2f38"/>
+  <circle cx="56" cy="66" r="40" fill="#1c1c22" stroke="#2f2f38" stroke-width="2"/>
+  <ellipse cx="42" cy="52" rx="12" ry="7" fill="#3a3a45" opacity="0.6"/>
+  <!-- Badge de check verde -->
+  <circle cx="86" cy="90" r="24" fill="#22c55e" stroke="#050507" stroke-width="3"/>
+  <path d="M76 90 L83 97 L97 81" fill="none" stroke="#050507" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

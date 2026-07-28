@@ -1,0 +1,16 @@
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.env.*
+*.db
+*.sqlite
+*.sqlite3
+hackerbank.db
+*.log
+.git/
+.claude/
+CLAUDE.md

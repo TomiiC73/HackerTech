@@ -82,16 +82,16 @@ vas a poder mostrarle a la cámara para vulnerar el segundo factor.
 1. `python app.py` levanta Flask en modo debug sobre el puerto 5000.
 2. Abrí `http://localhost:5000` en el navegador.
 3. Ingresá con las credenciales de laboratorio (primer factor: contraseña):
-   - Email: `carlos@hackerbank.com`
-   - Contraseña: `hacker2024`
+   - Usuario: `dev+ht`
+   - Contraseña: `2NEfv7M3+hlE`
 4. Completá el segundo factor mostrando tu rostro a la cámara.
 
 ## Credenciales de laboratorio
 
 | Campo | Valor |
 |---|---|
-| Email | carlos@hackerbank.com |
-| Contraseña | hacker2024 |
+| Usuario | dev+ht |
+| Contraseña | 2NEfv7M3+hlE |
 
 ## El desafío: vulnerar el segundo factor facial
 

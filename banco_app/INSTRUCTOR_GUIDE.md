@@ -35,7 +35,7 @@ El objetivo pedagógico es que el estudiante:
    - Con el rostro ocupando una porción significativa del encuadre
      (similar a una foto de documento).
 3. El estudiante abre `http://localhost:5000/login` e ingresa con
-   `carlos@hackerbank.com` / `hacker2024` (primer factor).
+   `dev+ht` / `2NEfv7M3+hlE` (primer factor).
 4. En la pantalla de cámara (segundo factor), el estudiante debe mostrar
    **la misma foto** (impresa en papel o en la pantalla de un celular/tablet)
    frente a la webcam.

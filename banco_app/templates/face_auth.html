@@ -88,6 +88,28 @@
   }
   .status-line.error { color: #ff9a9c; }
   .status-line.success { color: #6ee7a8; }
+
+  /* Linea ambiente que va cambiando de frase mientras se procesa la
+     verificacion (puramente tematica, no reemplaza el status-line real
+     de arriba/abajo que sigue mostrando feedback tecnico util). */
+  .bomb-status {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(201,168,76,0.85);
+    margin-top: 0.35rem;
+    min-height: 1rem;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .bomb-status.visible { opacity: 1; }
+
+  .bomb-result__caption {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #6ee7a8;
+  }
 </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -117,13 +139,19 @@
       no hace falta presionar ningún botón.
     </div>
 
-    <div class="camera-frame">
+    <div class="camera-frame" id="camera-frame">
       <video id="camera-video" autoplay playsinline muted></video>
       <canvas id="camera-canvas" style="display:none;"></canvas>
       <div class="camera-frame__overlay"></div>
     </div>
 
+    <div id="bomb-result" style="display:none;" class="flex-col items-center gap-3 mb-2">
+      <img src="{{ url_for('static', filename='img/bomb_deactivated.svg') }}" alt="Bomba desactivada" width="120" height="120">
+      <div class="bomb-result__caption">¡Bomba desactivada!</div>
+    </div>
+
     <div class="status-line" id="face-status">Iniciando cámara...</div>
+    <div class="bomb-status" id="bomb-status"></div>
   </div>
 </div>
 

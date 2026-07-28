@@ -1,0 +1,27 @@
+# Dos servicios completamente independientes - cada uno con su propio
+# contexto de build (solo ve su propia carpeta, nunca la del otro proyecto)
+# y su propio contenedor con Flask + tunel ngrok in-process.
+#
+# Levantar solo uno sin tocar el otro:
+#   docker compose up hackerbank
+#   docker compose up utn-frc-redesign
+services:
+  hackerbank:
+    build:
+      context: ./banco_app
+    container_name: hackerbank
+    env_file:
+      - ./banco_app/.env
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  utn-frc-redesign:
+    build:
+      context: ./utn_frc_redesign
+    container_name: utn-frc-redesign
+    env_file:
+      - ./utn_frc_redesign/.env
+    ports:
+      - "5001:5001"
+    restart: unless-stopped

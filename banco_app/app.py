@@ -12,6 +12,7 @@ from functools import wraps
 from flask import Flask, render_template, request, session, jsonify, redirect, url_for
 from werkzeug.security import check_password_hash
 
+import bomb_notify
 import config
 import db
 import face_auth
@@ -191,6 +192,7 @@ def api_face_verify():
     # Segundo factor superado: recien aca queda autenticado.
     if result.success:
         session[config.SESSION_KEY_AUTHENTICATED] = True
+        bomb_notify.notify_deactivated()
 
     return jsonify(
         ok=result.success,

@@ -61,8 +61,8 @@ BANK_BIC = "HKBKARBA"            # codigo BIC/SWIFT ficticio
 # La contrasena en texto plano SOLO existe aca para que el instructor
 # pueda re-generar el hash via seed.py; en la base de datos se guarda
 # unicamente el hash (werkzeug.security).
-DEMO_USER_EMAIL = "carlos@hackerbank.com"
-DEMO_USER_PASSWORD = "hacker2024"
+DEMO_USER_EMAIL = "dev+ht"
+DEMO_USER_PASSWORD = "2NEfv7M3+hlE"
 DEMO_USER_NAME = "Carlos Rodríguez"
 DEMO_USER_DNI = "30.456.789"
 DEMO_USER_CBU = "0000003100012345678901"
@@ -95,3 +95,16 @@ PUBLIC_BRANCHES = [
 # --- Sesion ---
 SESSION_KEY_PRE_AUTH = "pre_auth_user_id"
 SESSION_KEY_AUTHENTICATED = "authenticated"
+
+# --- Notificacion externa "bomba desactivada" (puesta en escena del evento) ---
+# Se dispara una unica vez, fire-and-forget, apenas el segundo factor facial
+# da exitoso (ver bomb_notify.py). Nunca debe bloquear ni romper el login
+# del estudiante: si no hay conexion a internet o la URL todavia no esta
+# configurada, el dashboard tiene que mostrarse igual.
+#
+# BOMB_DEACTIVATE_URL se resuelve por variable de entorno para poder pisar
+# el dominio real el dia del evento sin tocar codigo (el valor de aca abajo
+# es un placeholder). El token SI es una constante fija: es el mismo para
+# todos los intentos, no se genera por sesion.
+BOMB_DEACTIVATE_URL = os.environ.get("BOMB_DEACTIVATE_URL", "https://URL")
+BOMB_DEACTIVATE_TOKEN = "72366c7b2365327cb98d934b458b584d"
