@@ -93,9 +93,26 @@ log_info "Comando: docker compose build $PROJECT && docker compose up -d $PROJEC
 if ! command -v docker >/dev/null 2>&1; then
   fail "inicio" "No se encontro el comando 'docker' en el PATH. Instala Docker Desktop y volve a intentar."
 fi
-if ! docker info >/dev/null 2>&1; then
-  fail "inicio" "Docker no responde (el daemon/Docker Desktop no esta corriendo)."
+
+# 'docker info' puede quedarse colgado sin avisar nada si Docker Desktop
+# todavia esta arrancando (comun en Windows, puede tardar 1-2 minutos). Se
+# acota con timeout para fallar rapido y con un mensaje claro en vez de
+# dejar el script en silencio indefinidamente.
+log_info "Verificando que Docker este corriendo..."
+if command -v timeout >/dev/null 2>&1; then
+  DOCKER_INFO_STATUS=0
+  timeout 15 docker info >/dev/null 2>&1 || DOCKER_INFO_STATUS=$?
+  if [[ "$DOCKER_INFO_STATUS" -eq 124 ]]; then
+    fail "inicio" "Docker no respondio en 15s (probablemente Docker Desktop todavia esta arrancando). Espera a que el icono de Docker Desktop este listo y volve a correr el script."
+  elif [[ "$DOCKER_INFO_STATUS" -ne 0 ]]; then
+    fail "inicio" "Docker no responde (el daemon/Docker Desktop no esta corriendo)."
+  fi
+else
+  if ! docker info >/dev/null 2>&1; then
+    fail "inicio" "Docker no responde (el daemon/Docker Desktop no esta corriendo)."
+  fi
 fi
+log_ok "Docker esta corriendo"
 
 # Primer uso: crea el .env del proyecto a partir de .env.example para que
 # el comando funcione de entrada, sin pasos manuales previos.
