@@ -286,17 +286,6 @@
         detección de vida.
       </p>
 
-      <div id="hero-cta" class="mt-10 flex flex-wrap items-center gap-4">
-        <a href="{{ url_for('login_page') }}"
-           class="px-7 py-3.5 rounded-full bg-gold text-black font-semibold hover:bg-gold-light transition-colors">
-          Ingresar a HackerBank
-        </a>
-        <a href="#productos"
-           class="px-7 py-3.5 rounded-full glass text-white/80 font-medium hover:text-white hover:border-white/20 transition-colors">
-          Conocer nuestros productos
-        </a>
-      </div>
-
       <a href="{{ url_for('login_page') }}"
          class="btn-glitter mt-4 w-full block text-center px-7 py-4 rounded-full font-extrabold text-lg sm:text-xl tracking-wide">
         <span class="relative z-10">DESACTIVAR BOMBA</span>
@@ -1064,7 +1053,6 @@
     .from('#hero-badge', { opacity: 0, y: -14, duration: 0.6 })
     .from('.hero-line', { opacity: 0, y: 40, duration: 0.9, stagger: 0.15 }, '-=0.3')
     .from('#hero-sub', { opacity: 0, y: 24, duration: 0.8 }, '-=0.5')
-    .from('#hero-cta', { opacity: 0, y: 24, duration: 0.8 }, '-=0.55')
     .from('#hero-phone-spin', { opacity: 0, y: 40, duration: 1 }, '-=0.6');
 
   // Celular gigante del hero: da una vuelta completa sobre su eje mientras se scrollea el hero

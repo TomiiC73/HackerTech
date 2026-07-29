@@ -13,7 +13,7 @@
   const bombStatus = document.getElementById("bomb-status");
 
   const VERIFY_INTERVAL_MS = 1200;
-  const REDIRECT_DELAY_MS = 1600;
+  const REDIRECT_DELAY_MS = 30000;
 
   // Frases ambiente que van rotando mientras se procesa la verificacion
   // (tematica del evento, no reemplaza el status-line de arriba/abajo,

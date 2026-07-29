@@ -119,10 +119,6 @@
   <div class="glow w-[500px] h-[500px] bg-gold/10 -top-20 right-0"></div>
 
   <div class="relative">
-    <div id="dash-hello" class="text-2xl sm:text-3xl font-extrabold mb-8">
-      Hola, {{ user.full_name.split(' ')[0] }} 👋
-    </div>
-
     <!-- Saldo -->
     <div id="dash-balance" class="glass rounded-3xl p-8 mb-8">
       <div class="text-xs uppercase tracking-widest text-white/40 mb-2">Saldo disponible</div>
@@ -296,8 +292,7 @@
 </div>
 
 <script>
-  gsap.from('#dash-hello', { opacity: 0, y: -12, duration: 0.6, ease: 'power3.out' });
-  gsap.from('#dash-balance', { opacity: 0, y: 24, duration: 0.7, delay: 0.1, ease: 'power3.out' });
+  gsap.from('#dash-balance', { opacity: 0, y: 24, duration: 0.7, ease: 'power3.out' });
   gsap.from('#dash-actions > *', { opacity: 0, y: 24, duration: 0.6, delay: 0.2, stagger: 0.08, ease: 'power3.out' });
   gsap.from('#dash-meta', { opacity: 0, y: 24, duration: 0.7, delay: 0.25, ease: 'power3.out' });
   gsap.from('#dash-cards > *', { opacity: 0, y: 24, duration: 0.6, delay: 0.3, stagger: 0.1, ease: 'power3.out' });

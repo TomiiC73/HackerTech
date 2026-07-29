@@ -93,6 +93,9 @@ log_info "Comando: docker compose build $PROJECT && docker compose up -d $PROJEC
 if ! command -v docker >/dev/null 2>&1; then
   fail "inicio" "No se encontro el comando 'docker' en el PATH. Instala Docker Desktop y volve a intentar."
 fi
+if ! docker compose version >/dev/null 2>&1; then
+  fail "inicio" "El plugin 'docker compose' no esta disponible (docker compose version fallo). Actualiza Docker Desktop, que lo incluye por defecto."
+fi
 
 # 'docker info' puede quedarse colgado sin avisar nada si Docker Desktop
 # todavia esta arrancando (comun en Windows, puede tardar 1-2 minutos). Se
@@ -258,3 +261,9 @@ else
   echo "→ URL pública (ngrok): no disponible (sin token en $DIR/.env)"
 fi
 echo "${C_OK}${C_BOLD}=====================================================${C_RESET}"
+echo ""
+echo "Comandos utiles:"
+echo "  docker compose logs -f $PROJECT     # ver logs en vivo"
+echo "  docker compose restart $PROJECT     # reiniciar el contenedor"
+echo "  docker compose down $PROJECT        # bajarlo"
+echo "  docker compose ps                   # ver estado de ambos proyectos"

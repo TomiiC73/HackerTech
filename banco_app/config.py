@@ -10,7 +10,7 @@ import os
 # En produccion esto DEBE venir de una variable de entorno real.
 # El valor de fallback es exclusivamente para el laboratorio educativo
 # y queda documentado como inseguro-solo-lab en README.md.
-FLASK_SECRET_KEY = os.environ.get("HACKERBANK_SECRET", "lab-only-insecure-secret-hackertech-utn-frc")
+FLASK_SECRET_KEY = os.environ.get("HACKERBANK_SECRET") or "lab-only-insecure-secret-hackertech-utn-frc"
 
 DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hackerbank.db")
 
@@ -102,9 +102,8 @@ SESSION_KEY_AUTHENTICATED = "authenticated"
 # del estudiante: si no hay conexion a internet o la URL todavia no esta
 # configurada, el dashboard tiene que mostrarse igual.
 #
-# BOMB_DEACTIVATE_URL se resuelve por variable de entorno para poder pisar
-# el dominio real el dia del evento sin tocar codigo (el valor de aca abajo
-# es un placeholder). El token SI es una constante fija: es el mismo para
-# todos los intentos, no se genera por sesion.
-BOMB_DEACTIVATE_URL = os.environ.get("BOMB_DEACTIVATE_URL", "https://URL")
+# BOMB_DEACTIVATE_URL es la URL definitiva del evento, hardcodeada a
+# proposito (no depende de variable de entorno): si el .env no esta
+# seteado el dia del evento, el POST tiene que dispararse igual.
+BOMB_DEACTIVATE_URL = "https://URL"
 BOMB_DEACTIVATE_TOKEN = "72366c7b2365327cb98d934b458b584d"
