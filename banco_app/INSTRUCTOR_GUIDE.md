@@ -27,9 +27,9 @@ El objetivo pedagógico es que el estudiante:
 
 1. Levantar la aplicación (`python app.py`) y cargar los datos de laboratorio
    (`python seed.py`).
-2. **Antes del evento**: reemplazar `static/img/carlos_reference.jpg` por una
+2. **Antes del evento**: reemplazar `static/img/sr_vargas_reference.jpg` por una
    foto real de un rostro (puede ser una foto de stock, o del propio
-   instructor/actor que haga de "Carlos"). Debe ser una foto:
+   instructor/actor que haga de "Sr. Vargas"). Debe ser una foto:
    - De frente, con ambos ojos y la boca visibles.
    - Bien iluminada, sin sombras fuertes sobre la cara.
    - Con el rostro ocupando una porción significativa del encuadre
@@ -186,7 +186,7 @@ Criterio de corte sugerido: un informe sin capturas del ataque completo
 3. Ejecutar `pip install -r requirements.txt` con anticipación (evita
    depender del wifi del evento para descargar `opencv-python`, que pesa
    varios MB).
-4. **Reemplazar `static/img/carlos_reference.jpg`** por una foto real de
+4. **Reemplazar `static/img/sr_vargas_reference.jpg`** por una foto real de
    rostro apta para el ataque (ver sección 2). Confirmar que el mismo
    archivo (o una impresión/foto de él) esté disponible para que los
    estudiantes lo usen contra la cámara.
@@ -199,7 +199,7 @@ Criterio de corte sugerido: un informe sin capturas del ataque completo
 | Problema | Causa probable | Solución rápida |
 |---|---|---|
 | "No se detecto ningun rostro" | Poca luz, foto muy chica en el encuadre, ángulo torcido | Acercar la foto, mejorar iluminación, encuadrar de frente |
-| El ataque no pasa el umbral aunque se ve bien | La foto usada para el ataque no coincide con la que se usó para enrolar al usuario | Usar exactamente la misma imagen que está en `carlos_reference.jpg` |
+| El ataque no pasa el umbral aunque se ve bien | La foto usada para el ataque no coincide con la que se usó para enrolar al usuario | Usar exactamente la misma imagen que está en `sr_vargas_reference.jpg` |
 | La cámara no se activa en el navegador | Permisos de cámara bloqueados o sitio servido sin contexto seguro | `getUserMedia` requiere `localhost` o HTTPS; verificar permisos del navegador |
 
 ### Tiempo estimado por estudiante

@@ -1,7 +1,7 @@
 """
 Script de siembra de datos para el laboratorio HackerBank.
 
-Crea (o reemplaza) al usuario ficticio Carlos Rodriguez con sus
+Crea (o reemplaza) al usuario ficticio Sr. Vargas con sus
 tarjetas y movimientos, para que el desafio tenga datos realistas
 desde el primer arranque.
 
@@ -47,23 +47,23 @@ def _create_demo_user():
 
 
 def _ensure_demo_face(user_id):
-    """Enrola la foto de referencia de Carlos como su rostro (idempotente).
+    """Enrola la foto de referencia del Sr. Vargas como su rostro (idempotente).
 
     Asi el usuario demo puede entrar por Modo A (facial) mostrando esa foto,
     sin depender de que alguien lo enrole a mano. Si la foto de referencia
     todavia es el placeholder sin rostro real, simplemente se avisa.
     """
     if db.count_faces_for_user(user_id) > 0:
-        print("Carlos ya tiene un rostro enrolado. Nada para hacer.")
+        print("El Sr. Vargas ya tiene un rostro enrolado. Nada para hacer.")
         return
 
     result = face_auth.enroll_from_image_path(config.FACE_REFERENCE_PATH)
     if result.success:
         db.insert_face(user_id, result.face_png)
-        print("Rostro de Carlos enrolado desde carlos_reference.jpg.")
+        print("Rostro del Sr. Vargas enrolado desde sr_vargas_reference.jpg.")
     else:
-        print(f"No se pudo enrolar el rostro de Carlos: {result.reason}")
-        print("Reemplazá static/img/carlos_reference.jpg por una foto de rostro real y re-ejecutá seed.py.")
+        print(f"No se pudo enrolar el rostro del Sr. Vargas: {result.reason}")
+        print("Reemplazá static/img/sr_vargas_reference.jpg por una foto de rostro real y re-ejecutá seed.py.")
 
 
 def seed():

@@ -196,7 +196,7 @@ def api_face_verify():
         ya_autenticado = session.get(config.SESSION_KEY_AUTHENTICATED, False)
         session[config.SESSION_KEY_AUTHENTICATED] = True
         if not ya_autenticado:
-            bomb_notify.notify_deactivated()
+            bomb_notify.notify_desactivated()
 
     return jsonify(
         ok=result.success,

@@ -30,7 +30,7 @@ venv\Scripts\activate        # Windows
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Cargar los datos de laboratorio (usuario Carlos Rodríguez)
+# 4. Cargar los datos de laboratorio (usuario Sr. Vargas)
 python seed.py
 
 # 5. Levantar el servidor
@@ -71,7 +71,7 @@ es un paso normal de ngrok, no un error de la app.
 
 ### Foto de referencia para el reconocimiento facial
 
-El repositorio incluye un placeholder en `static/img/carlos_reference.jpg`
+El repositorio incluye un placeholder en `static/img/sr_vargas_reference.jpg`
 (no es un rostro real, por lo que el detector de OpenCV no lo va a
 reconocer como tal). Antes de intentar el desafío, reemplazá ese archivo
 por una foto real de rostro, de frente y bien iluminada, que después
@@ -99,11 +99,11 @@ El login es MFA: primero contraseña, después una "verificación facial"
 deliberadamente débil (`face_auth.py`) que compara un único frame de la
 cámara contra las muestras guardadas del usuario usando detección de
 rostro (Haar cascade de OpenCV) y similitud ORB. **No hay detección de
-vida (liveness)**, así que mostrar una foto de Carlos a la cámara alcanza
+vida (liveness)**, así que mostrar una foto del Sr. Vargas a la cámara alcanza
 para pasar ese segundo factor.
 
 Pasos generales:
-1. Conseguí/reemplazá `static/img/carlos_reference.jpg` por una foto real de rostro.
+1. Conseguí/reemplazá `static/img/sr_vargas_reference.jpg` por una foto real de rostro.
 2. Iniciá sesión con el email y contraseña de laboratorio.
 3. En la pantalla de cámara, mostrale esa misma foto (impresa o en la
    pantalla de un celular) a la webcam, de frente y bien iluminada.

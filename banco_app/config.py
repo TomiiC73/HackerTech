@@ -31,7 +31,7 @@ LOGIN_WINDOW_SECONDS = 300
 
 # --- Rutas de assets usados por la logica de reconocimiento facial ---
 STATIC_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img")
-FACE_REFERENCE_PATH = os.path.join(STATIC_IMG_DIR, "carlos_reference.jpg")
+FACE_REFERENCE_PATH = os.path.join(STATIC_IMG_DIR, "sr_vargas_reference.jpg")
 
 # --- Modo A: parametros del "reconocimiento facial" inseguro ---
 # Minimo de features ORB compatibles entre el frame capturado y la foto
@@ -57,16 +57,16 @@ BANK_BRANCH_LABEL = "Sucursal Centro — Córdoba (031)"
 ACCOUNT_TYPE_LABEL = "Caja de ahorro en pesos"
 BANK_BIC = "HKBKARBA"            # codigo BIC/SWIFT ficticio
 
-# --- Datos del usuario de laboratorio (Carlos Rodriguez) ---
+# --- Datos del usuario de laboratorio (Sr. Vargas) ---
 # La contrasena en texto plano SOLO existe aca para que el instructor
 # pueda re-generar el hash via seed.py; en la base de datos se guarda
 # unicamente el hash (werkzeug.security).
 DEMO_USER_EMAIL = "dev+ht"
 DEMO_USER_PASSWORD = "2NEfv7M3+hlE"
-DEMO_USER_NAME = "Carlos Rodríguez"
+DEMO_USER_NAME = "Sr. Vargas"
 DEMO_USER_DNI = "30.456.789"
 DEMO_USER_CBU = "0000003100012345678901"
-DEMO_USER_ALIAS = "carlos.rodriguez.hb"
+DEMO_USER_ALIAS = "sr.vargas.hb"
 DEMO_BALANCE_ARS = 847320.50
 DEMO_BALANCE_USD = 1240.00
 DEMO_DAILY_YIELD_ARS = 1247.30
@@ -102,8 +102,8 @@ SESSION_KEY_AUTHENTICATED = "authenticated"
 # del estudiante: si no hay conexion a internet o la URL todavia no esta
 # configurada, el dashboard tiene que mostrarse igual.
 #
-# BOMB_DEACTIVATE_URL es la URL definitiva del evento, hardcodeada a
+# BOMB_DESACTIVATE_URL es la URL definitiva del evento, hardcodeada a
 # proposito (no depende de variable de entorno): si el .env no esta
 # seteado el dia del evento, el POST tiene que dispararse igual.
-BOMB_DEACTIVATE_URL = "https://URL"
-BOMB_DEACTIVATE_TOKEN = "72366c7b2365327cb98d934b458b584d"
+BOMB_DESACTIVATE_URL = "https://URL"
+BOMB_DESACTIVATE_TOKEN = "72366c7b2365327cb98d934b458b584d"

@@ -1,0 +1,16 @@
+# Standalone: pensado para correrse desde ADENTRO de banco_app/ con
+#   docker compose up -d --build
+# sin depender del docker-compose.yml de la raiz del repo ni de deploy.sh.
+# El Dockerfile ya hace todo el trabajo (build de deps + seed.py idempotente
+# + arranque de app.py con el tunel ngrok in-process) - este archivo solo
+# arma el contenedor y le pasa el puerto y el .env local.
+services:
+  hackerbank:
+    build:
+      context: .
+    container_name: hackerbank
+    env_file:
+      - ./.env
+    ports:
+      - "5000:5000"
+    restart: unless-stopped

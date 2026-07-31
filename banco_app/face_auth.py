@@ -158,7 +158,7 @@ def enroll(frame_b64):
 
 
 def enroll_from_image_path(image_path):
-    """Igual que enroll() pero desde un archivo (lo usa seed.py para Carlos)."""
+    """Igual que enroll() pero desde un archivo (lo usa seed.py para Sr. Vargas)."""
     image = cv2.imread(image_path)
     if image is None:
         return EnrollResult(False, None, "No se pudo leer la imagen.")
