@@ -72,9 +72,11 @@ if [[ -z "$PROJECT" ]]; then
   exit 1
 fi
 
+# USES_NGROK distingue el paso de tunel publico: hackerbank ya no lo usa
+# (se saco el tunel ngrok in-process de banco_app/), utn-frc-redesign si.
 case "$PROJECT" in
-  hackerbank)       DIR="banco_app";        PORT=5000 ;;
-  utn-frc-redesign) DIR="utn_frc_redesign"; PORT=5001 ;;
+  hackerbank)       DIR="banco_app";        PORT=5000; USES_NGROK=0 ;;
+  utn-frc-redesign) DIR="utn_frc_redesign"; PORT=5001; USES_NGROK=1 ;;
   *)
     echo "Proyecto desconocido: '$PROJECT'"
     echo ""
@@ -123,7 +125,11 @@ if [[ ! -f "$DIR/.env" ]]; then
   if [[ -f "$DIR/.env.example" ]]; then
     cp "$DIR/.env.example" "$DIR/.env"
     log_ok "Se creo $DIR/.env a partir de $DIR/.env.example."
-    log_warn "Completa ahi el token de ngrok y los secretos antes de exponerlo en el evento."
+    if [[ "$USES_NGROK" -eq 1 ]]; then
+      log_warn "Completa ahi el token de ngrok y los secretos antes de exponerlo en el evento."
+    else
+      log_warn "Completa ahi los secretos antes de exponerlo en el evento."
+    fi
   else
     log_warn "No existe $DIR/.env ni $DIR/.env.example; 'docker compose' puede fallar al levantar el servicio."
   fi
@@ -133,8 +139,9 @@ fi
 
 # Token de ngrok configurado por el usuario (si lo hay), para distinguir
 # mas adelante "no configurado a proposito" de "configurado pero fallo".
+# Solo aplica a proyectos que todavia usan ngrok (USES_NGROK=1).
 TOKEN_CONFIGURED=0
-if [[ -f "$DIR/.env" ]] && grep -qE '^(HACKERBANK_NGROK_AUTHTOKEN|UTNFRC_NGROK_AUTHTOKEN|NGROK_AUTHTOKEN)=.+' "$DIR/.env"; then
+if [[ "$USES_NGROK" -eq 1 ]] && [[ -f "$DIR/.env" ]] && grep -qE '^(HACKERBANK_NGROK_AUTHTOKEN|UTNFRC_NGROK_AUTHTOKEN|NGROK_AUTHTOKEN)=.+' "$DIR/.env"; then
   TOKEN_CONFIGURED=1
 fi
 
@@ -205,44 +212,49 @@ fi
 log_ok "Contenedor de $PROJECT corriendo y respondiendo en http://localhost:$PORT"
 
 # --------------------------------------------------------------------
-# Paso 3: tunel ngrok
+# Paso 3: tunel ngrok (solo para proyectos con USES_NGROK=1)
 # --------------------------------------------------------------------
-log_step "Paso 4/5: Tunel ngrok"
-log_info "Iniciando/confirmando el tunel ngrok..."
-
 PUBLIC_URL=""
-LOCAL_ONLY=0
-for _ in $(seq 1 30); do
-  LOGS="$(docker compose logs "$PROJECT" 2>/dev/null || true)"
+if [[ "$USES_NGROK" -eq 1 ]]; then
+  log_step "Paso 4/5: Tunel ngrok"
+  log_info "Iniciando/confirmando el tunel ngrok..."
 
-  if echo "$LOGS" | grep -q "disponible para cualquiera en:"; then
-    PUBLIC_URL="$(echo "$LOGS" | grep "disponible para cualquiera en:" | tail -1 | sed 's/^.*disponible para cualquiera en: *//')"
-    break
+  LOCAL_ONLY=0
+  for _ in $(seq 1 30); do
+    LOGS="$(docker compose logs "$PROJECT" 2>/dev/null || true)"
+
+    if echo "$LOGS" | grep -q "disponible para cualquiera en:"; then
+      PUBLIC_URL="$(echo "$LOGS" | grep "disponible para cualquiera en:" | tail -1 | sed 's/^.*disponible para cualquiera en: *//')"
+      break
+    fi
+
+    if echo "$LOGS" | grep -q "corriendo solo en local"; then
+      LOCAL_ONLY=1
+      break
+    fi
+
+    sleep 1
+  done
+
+  if [[ -n "$PUBLIC_URL" ]]; then
+    log_ok "Tunel ngrok activo"
+    echo ""
+    echo "${C_OK}${C_BOLD}――――――――――――――――――――――――――――――――――――――――――――――――${C_RESET}"
+    echo "${C_OK}${C_BOLD}  URL publica (ngrok): $PUBLIC_URL${C_RESET}"
+    echo "${C_OK}${C_BOLD}――――――――――――――――――――――――――――――――――――――――――――――――${C_RESET}"
+  elif [[ "$LOCAL_ONLY" -eq 1 ]]; then
+    if [[ "$TOKEN_CONFIGURED" -eq 1 ]]; then
+      # Hay token puesto y aun asi no se pudo abrir el tunel: esto SI es
+      # una falla real (no el modo local-only esperado por falta de token).
+      fail "ngrok" "Hay un token de ngrok configurado en $DIR/.env pero el tunel no se pudo abrir. Revisa 'docker compose logs $PROJECT' para el error especifico."
+    fi
+    log_warn "No hay token de ngrok configurado en $DIR/.env: la app sigue disponible solo en local (esto es esperado, no un error)."
+  else
+    fail "ngrok" "No se pudo confirmar el estado del tunel ngrok despues de 30s (ni URL publica ni aviso de modo local en los logs). Revisa 'docker compose logs $PROJECT'."
   fi
-
-  if echo "$LOGS" | grep -q "corriendo solo en local"; then
-    LOCAL_ONLY=1
-    break
-  fi
-
-  sleep 1
-done
-
-if [[ -n "$PUBLIC_URL" ]]; then
-  log_ok "Tunel ngrok activo"
-  echo ""
-  echo "${C_OK}${C_BOLD}――――――――――――――――――――――――――――――――――――――――――――――――${C_RESET}"
-  echo "${C_OK}${C_BOLD}  URL publica (ngrok): $PUBLIC_URL${C_RESET}"
-  echo "${C_OK}${C_BOLD}――――――――――――――――――――――――――――――――――――――――――――――――${C_RESET}"
-elif [[ "$LOCAL_ONLY" -eq 1 ]]; then
-  if [[ "$TOKEN_CONFIGURED" -eq 1 ]]; then
-    # Hay token puesto y aun asi no se pudo abrir el tunel: esto SI es
-    # una falla real (no el modo local-only esperado por falta de token).
-    fail "ngrok" "Hay un token de ngrok configurado en $DIR/.env pero el tunel no se pudo abrir. Revisa 'docker compose logs $PROJECT' para el error especifico."
-  fi
-  log_warn "No hay token de ngrok configurado en $DIR/.env: la app sigue disponible solo en local (esto es esperado, no un error)."
 else
-  fail "ngrok" "No se pudo confirmar el estado del tunel ngrok despues de 30s (ni URL publica ni aviso de modo local en los logs). Revisa 'docker compose logs $PROJECT'."
+  log_step "Paso 4/5: Acceso"
+  log_ok "$PROJECT no expone tunel publico; queda disponible solo en local."
 fi
 
 # --------------------------------------------------------------------
@@ -255,10 +267,13 @@ if [[ -n "$PUBLIC_URL" ]]; then
   echo "${C_OK}${C_BOLD}✅ $PROJECT desplegado correctamente${C_RESET}"
   echo "→ App local: http://localhost:$PORT"
   echo "→ URL pública (ngrok): $PUBLIC_URL"
-else
+elif [[ "$USES_NGROK" -eq 1 ]]; then
   echo "${C_OK}${C_BOLD}✅ $PROJECT desplegado correctamente (modo local, sin ngrok)${C_RESET}"
   echo "→ App local: http://localhost:$PORT"
   echo "→ URL pública (ngrok): no disponible (sin token en $DIR/.env)"
+else
+  echo "${C_OK}${C_BOLD}✅ $PROJECT desplegado correctamente (modo local)${C_RESET}"
+  echo "→ App local: http://localhost:$PORT"
 fi
 echo "${C_OK}${C_BOLD}=====================================================${C_RESET}"
 echo ""

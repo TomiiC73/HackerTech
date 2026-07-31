@@ -18,7 +18,7 @@ DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hacker
 # HttpOnly evita que JavaScript lea la cookie (mitiga robo por XSS).
 # SameSite=Lax mitiga CSRF en peticiones cross-site.
 # Secure obliga HTTPS: se deja configurable porque el lab corre en http
-# local; en produccion (HTTPS/ngrok) poner HACKERBANK_COOKIE_SECURE=1.
+# local; en produccion (HTTPS) poner HACKERBANK_COOKIE_SECURE=1.
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = os.environ.get("HACKERBANK_COOKIE_SECURE", "0") == "1"

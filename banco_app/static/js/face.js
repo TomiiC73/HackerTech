@@ -9,11 +9,11 @@
   const canvas = document.getElementById("camera-canvas");
   const statusLine = document.getElementById("face-status");
   const cameraFrame = document.getElementById("camera-frame");
+  const faceIntro = document.getElementById("face-intro");
   const bombResult = document.getElementById("bomb-result");
   const bombStatus = document.getElementById("bomb-status");
 
   const VERIFY_INTERVAL_MS = 1200;
-  const REDIRECT_DELAY_MS = 30000;
 
   // Frases ambiente que van rotando mientras se procesa la verificacion
   // (tematica del evento, no reemplaza el status-line de arriba/abajo,
@@ -93,10 +93,10 @@
         clearInterval(intervalId);
         stopBombMessageCycle();
         cameraFrame.style.display = "none";
+        faceIntro.style.display = "none";
         bombResult.style.display = "flex";
-        statusLine.textContent = `Rostro verificado (score ${data.score}). Redirigiendo...`;
+        statusLine.textContent = `Rostro verificado (score ${data.score}).`;
         statusLine.className = "status-line success";
-        setTimeout(() => { window.location.href = data.next; }, REDIRECT_DELAY_MS);
         return;
       }
 

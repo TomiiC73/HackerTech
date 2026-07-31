@@ -39,36 +39,6 @@ python app.py
 
 La aplicación queda disponible en **http://localhost:5000**.
 
-### Acceso público con ngrok
-
-Al ejecutar `python app.py`, la app intenta abrir automáticamente un túnel
-público con [ngrok](https://ngrok.com/) para que cualquier persona (por
-ejemplo, otros estudiantes en el evento) pueda probar el desafío desde su
-propio dispositivo sin estar en la misma red.
-
-Para que funcione necesitás ngrok instalado y autenticado una sola vez:
-
-```bash
-ngrok config add-authtoken <tu-token>   # gratis en https://dashboard.ngrok.com
-```
-
-Si no hay un authtoken configurado, la consola lo va a indicar y la app
-sigue funcionando normalmente solo en `http://localhost:5000`.
-
-Al levantar el servidor vas a ver algo así en la consola:
-
-```
-================================================================
-HackerBank disponible para cualquiera en: https://xxxx-xxxx.ngrok-free.dev
-(tambien accesible en local: http://localhost:5000)
-================================================================
-```
-
-Compartí esa URL pública con quien quieras que pruebe el desafío. La
-primera vez que alguien la visite, ngrok (plan gratuito) muestra una
-pantalla de advertencia estándar ("Visit Site") antes de dejarlo pasar;
-es un paso normal de ngrok, no un error de la app.
-
 ### Foto de referencia para el reconocimiento facial
 
 El repositorio incluye un placeholder en `static/img/sr_vargas_reference.jpg`

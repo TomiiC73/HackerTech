@@ -1,5 +1,5 @@
-# HackerBank - imagen independiente (Flask + SQLite + OpenCV + tunel ngrok
-# in-process via pyngrok). No comparte contexto de build con utn_frc_redesign/.
+# HackerBank - imagen independiente (Flask + SQLite + OpenCV). No comparte
+# contexto de build con utn_frc_redesign/.
 FROM python:3.11-slim
 
 # opencv-python (face_auth.py) necesita estas librerias de sistema para que

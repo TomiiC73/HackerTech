@@ -16,7 +16,6 @@ import bomb_notify
 import config
 import db
 import face_auth
-import public_tunnel
 import rate_limit
 
 SERVER_PORT = 5000
@@ -218,28 +217,9 @@ def _get_lan_ip():
         probe.close()
 
 
-def _expose_publicly_via_ngrok():
-    """Abre un tunel ngrok publico e imprime las URLs de acceso."""
-    public_url = public_tunnel.open_tunnel(SERVER_PORT)
-    if not public_url:
-        print(f"HackerBank corriendo solo en local: http://localhost:{SERVER_PORT}")
-        return
-
-    lan_ip = _get_lan_ip()
-
-    print("=" * 64)
-    print(f"HackerBank disponible para cualquiera en: {public_url}")
-    print(f"(tambien accesible en local: http://localhost:{SERVER_PORT})")
-    if lan_ip:
-        print(f"(o en tu misma wifi, sin ngrok: http://{lan_ip}:{SERVER_PORT})")
-    print("=" * 64)
-
-
 if __name__ == "__main__":
-    _expose_publicly_via_ngrok()
-    try:
-        # use_reloader=False: con el tunel ya abierto, el auto-reload de
-        # Flask relanzaria este script y abriria un segundo tunel.
-        app.run(debug=True, host="0.0.0.0", port=SERVER_PORT, use_reloader=False)
-    finally:
-        public_tunnel.close_tunnels()
+    lan_ip = _get_lan_ip()
+    print(f"HackerBank disponible en: http://localhost:{SERVER_PORT}")
+    if lan_ip:
+        print(f"(o en tu misma wifi: http://{lan_ip}:{SERVER_PORT})")
+    app.run(debug=True, host="0.0.0.0", port=SERVER_PORT)
