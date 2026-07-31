@@ -5,7 +5,7 @@ import UtnLogo from "./UtnLogo";
 import Toast from "./Toast";
 import StepperHeader from "./signup/StepperHeader";
 import SignupStep1Form from "./signup/SignupStep1Form";
-import SignupStep3Success from "./signup/SignupStep3Success";
+import SignupStepSuccess from "./signup/SignupStepSuccess";
 
 const EMPTY_FORM = { first_name: "", last_name: "", dni: "", email: "", password: "", career: "" };
 
@@ -107,7 +107,7 @@ export default function SignupStepper() {
                 onSubmit={handleStep1Submit}
               />
             )}
-            {step === 2 && <SignupStep3Success legajo={legajo} domain={domain} />}
+            {step === 2 && <SignupStepSuccess legajo={legajo} domain={domain} />}
           </AnimatePresence>
         </div>
       </div>

@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 // Puramente presentacional: solo muestra el legajo que ya se genero y
 // confirmo del lado del servidor (ver app.py `_generate_unique_legajo`).
 // No genera ni valida nada por su cuenta.
-export default function SignupStep3Success({ legajo, domain }) {
+export default function SignupStepSuccess({ legajo, domain }) {
   return (
     <motion.div
-      key="step3"
+      key="step2"
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}

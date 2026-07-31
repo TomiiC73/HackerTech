@@ -1,5 +1,5 @@
 // Paso 2 del Modo B: confirmar con FIDO2 al usuario ya identificado por
-// legajo + dominio + contraseña (ver app.py /api/login/mfa y /webauthn).
+// legajo + dominio + contraseña (ver app.py /api/login y /webauthn).
 (function () {
   const btn = document.getElementById("webauthn-confirm-btn");
   const statusLine = document.getElementById("webauthn-status");

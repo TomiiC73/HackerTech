@@ -51,7 +51,11 @@ function RegularCard({ item }) {
 export default function NewsBento({ items = [] }) {
   if (!items.length) return null;
 
-  const [first, ...rest] = items;
+  // La destacada es la que trae featured=true desde config.py (no
+  // simplemente la primera del array): si el orden de NEWS_ITEMS cambia,
+  // la tarjeta grande sigue mostrando la noticia correcta.
+  const first = items.find((item) => item.featured) || items[0];
+  const rest = items.filter((item) => item !== first);
 
   return (
     <section id="noticias" className="py-20 sm:py-28 px-5 sm:px-8 bg-slate-50 dark:bg-carbon-950" aria-labelledby="noticias-title">

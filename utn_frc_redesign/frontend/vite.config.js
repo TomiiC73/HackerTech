@@ -11,7 +11,7 @@ export default defineConfig({
     // desde el dev server de Vite evita configurar CORS y hace que las
     // llamadas fetch("/api/...") funcionen igual en dev que en produccion.
     //
-    // Ademas, este frontend React REEMPLAZA solo "/" y "/login" (ver
+    // Ademas, este frontend React REEMPLAZA solo "/" y "/signup" (ver
     // App.jsx/LoginCard.jsx) - las paginas post-login ("/portal",
     // "/webauthn") siguen siendo Jinja server-side de Flask (ver
     // ../templates/). Por eso una navegacion de pagina completa (no un

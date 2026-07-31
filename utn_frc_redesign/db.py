@@ -87,14 +87,6 @@ def insert_user(legajo, domain, email, password_hash, full_name, dni, role):
         return cursor.lastrowid
 
 
-def delete_user(user_id):
-    """Revierte un alta cuando el enrolamiento FIDO2 obligatorio falla:
-    sin una credencial asociada la cuenta quedaria inutilizable, asi que
-    no debe persistir (cascada a webauthn_credentials via ON DELETE CASCADE)."""
-    with get_connection() as conn:
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-
-
 def save_webauthn_credential(user_id, credential_id, public_key, sign_count):
     with get_connection() as conn:
         conn.execute(

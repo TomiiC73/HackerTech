@@ -16,10 +16,10 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = os.environ.get("UTNFRC_COOKIE_SECURE", "0") == "1"
 
 # --- WebAuthn / FIDO2 (segundo factor del Modo B, tras identificarse) ---
-# El RP ID debe ser un dominio (o "localhost") sin protocolo ni puerto.
-WEBAUTHN_RP_ID = os.environ.get("UTNFRC_RP_ID", "localhost")
+# rp_id/origin NO se leen de config: app.py los deriva del request real en
+# cada llamada (ver _webauthn_ids()), asi que funcionan automaticamente
+# detras de cualquier dominio (incluido un tunel ngrok) sin tocar nada aca.
 WEBAUTHN_RP_NAME = "UTN Facultad Regional Córdoba"
-WEBAUTHN_ORIGIN = os.environ.get("UTNFRC_ORIGIN", "http://localhost:5001")
 
 # --- Sesion ---
 SESSION_KEY_PRE_AUTH = "pre_auth_user_id"       # identificado (legajo+dominio+contraseña), FIDO2 pendiente
@@ -71,7 +71,6 @@ DEMO_USER_ROLE = "Alumna — Ingeniería en Sistemas de Información"
 NEWS_ITEMS = [
     {
         "date": "01/07/2026",
-        "tag": "Secretaría de Planeamiento Académico",
         "category": "Inscripciones",
         "title": "Abiertas las inscripciones para Tecnicaturas Universitarias",
         "summary": (
@@ -82,7 +81,6 @@ NEWS_ITEMS = [
     },
     {
         "date": "22/06/2026",
-        "tag": "CIGEF",
         "category": "Académica",
         "title": "Nuevo Centro de Investigación en Geotecnia y Estructuras",
         "summary": (
@@ -93,7 +91,6 @@ NEWS_ITEMS = [
     },
     {
         "date": "11/06/2026",
-        "tag": "Secretaría de Extensión Universitaria",
         "category": "Extensión",
         "title": "Cursos de Armado y Reparación de PC y Electricista Industrial",
         "summary": (
@@ -104,7 +101,6 @@ NEWS_ITEMS = [
     },
     {
         "date": "27/05/2026",
-        "tag": "Secretaría Académica",
         "category": "Académica",
         "title": "Curricularización del extensionismo en materias del ciclo básico",
         "summary": (

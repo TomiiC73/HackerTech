@@ -25,11 +25,3 @@ export function translateWebAuthnError(err) {
   if (!err) return FALLBACK_MESSAGE;
   return MESSAGES[err.name] || FALLBACK_MESSAGE;
 }
-
-// Distingue "el usuario no tiene forma de usar FIDO2 acá" (soporte ausente o
-// cancelación) de otros errores, para que la UI pueda decidir si vale la pena
-// ofrecer un botón de "reintentar" o directamente guiar de vuelta a la
-// contraseña (Modo A).
-export function isRecoverableWebAuthnError(err) {
-  return err && (err.name === "NotAllowedError" || err.name === "AbortError");
-}

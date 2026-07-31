@@ -5,7 +5,7 @@ Modo B: identificación (legajo + dominio + contraseña) + confirmación FIDO2/W
 COMO FUNCIONA EL SEGUNDO FACTOR:
 ------------------------------------------------------------------
 A diferencia de un login "usernameless", aca el usuario ya fue identificado
-en el paso 1 (legajo + "@" + contraseña, ver app.py `/api/login/mfa`). Por
+en el paso 1 (legajo + "@" + contraseña, ver app.py `/api/login`). Por
 eso `build_authentication_options` recibe el usuario y arma un
 `allow_credentials` acotado a SUS propias credenciales: el navegador solo
 ofrece esas, no cualquiera guardada en el dispositivo.

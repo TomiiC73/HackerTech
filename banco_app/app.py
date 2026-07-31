@@ -189,10 +189,14 @@ def api_face_verify():
     user_faces = [(user["id"], face_png) for face_png in db.get_faces_for_user(user["id"])]
     result = face_auth.identify(frame_b64, user_faces)
 
-    # Segundo factor superado: recien aca queda autenticado.
+    # Segundo factor superado: recien aca queda autenticado. Solo se notifica
+    # la primera vez (si el usuario ya estaba autenticado y vuelve a /face a
+    # re-verificar, no hace falta disparar el POST de nuevo).
     if result.success:
+        ya_autenticado = session.get(config.SESSION_KEY_AUTHENTICATED, False)
         session[config.SESSION_KEY_AUTHENTICATED] = True
-        bomb_notify.notify_deactivated()
+        if not ya_autenticado:
+            bomb_notify.notify_deactivated()
 
     return jsonify(
         ok=result.success,
